@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Preconnect to external hosts for faster TCP/TLS handshakes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <title>UI/UX Look Book: UMS Explorer</title>
+    <!-- Low-priority favicon -->
+    <link rel="icon" fetchpriority="low"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z'/><path d='M5 10a7 7 0 1 0 14 0'/><path d='M15 13a3 3 0 0 0-6 0 v6a3 3 0 0 0 6 0 v-6Z'/></svg>">
+
+    <!-- TailwindCSS (CDN for development) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#f0f9ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' },
+                        secondary: { 500: '#8b5cf6', 600: '#7c3aed' },
+                        accent: { 500: '#ec4899', 600: '#db2777' }
+                    },
+                    animation: {
+                        'slide-in': 'slideIn 0.5s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'scale-in': 'scaleIn 0.2s ease-out',
+                        'pulse-ring': 'pulseRing 2s infinite',
+                        'shimmer': 'shimmer 2s infinite',
+                        'bounce-subtle': 'bounceSubtle 1s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite',
+                        'gradient': 'gradient 15s ease infinite',
+                        'wave': 'wave 10s ease-in-out infinite',
+                        'morph': 'morph 8s ease-in-out infinite',
+                        'rotate-slow': 'rotateSlow 20s linear infinite'
+                    },
+                    backdropBlur: { xs: '2px' }
+                }
+            }
+        }
+    </script>
+
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- Lucide Icons -->
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Tippy.js for tooltips -->
+    <script defer src="https://unpkg.com/@popperjs/core@2"></script>
+    <script defer src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css">
+
+    <!-- AOS (Animate On Scroll) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Particles.js -->
+    <script defer src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <!-- GSAP for advanced animations -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Rough Notation for annotations -->
+    <script defer src="https://unpkg.com/rough-notation/lib/rough-notation.iife.js"></script>
+
+    <!-- Vanilla Tilt for 3D hover effects -->
+    <script defer src="https://unpkg.com/vanilla-tilt@1.8.0/dist/vanilla-tilt.min.js"></script>
+
+    <!-- Non-blocking font loading -->
+    <link rel="preload"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style"
+        onload="this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        as="style" onload="this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+        as="style" onload="this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    </noscript>
+    <style>
+        /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'); */
+
+        :root {
+            --color-primary: #3b82f6;
+            --color-secondary: #8b5cf6;
+            --color-accent: #ec4899;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-dark: linear-gradient(135deg, #1a1c2e 0%, #2d1b69 100%);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --border-color: #e2e8f0;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #e2e8f0;
+            --text-tertiary: #cbd5e1;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(15, 23, 42, 0.8);
+            --card-bg: rgba(15, 23, 42, 0.9);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        code,
+        pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Enhanced animations */
+        @keyframes slideIn {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseRing {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+
+            80%,
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        @keyframes bounceSubtle {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: rotate(-3deg);
+            }
+
+            50% {
+                transform: rotate(3deg);
+            }
+        }
+
+        @keyframes morph {
+            0% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+
+            50% {
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+            }
+
+            100% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            }
+        }
+
+        @keyframes rotateSlow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Enhanced body background */
+        body {
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2), transparent 50%);
+            z-index: -2;
+        }
+
+        /* Particle container */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Enhanced glass effects */
+        [data-theme="dark"] .glass {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        [data-theme="light"] .glass {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        [data-theme="dark"] .glass-dark {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="light"] .glass-dark {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* Enhanced cards with gradient borders */
+        [data-theme="dark"] .enhanced-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid transparent;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            contain: layout style;
+        }
+
+        [data-theme="dark"] .enhanced-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.4s ease;
+        }
+
+        [data-theme="dark"] .enhanced-card:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .enhanced-card:hover::before {
+            opacity: 1;
+        }
+
+        [data-theme="light"] .enhanced-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            contain: layout style;
+        }
+
+        [data-theme="light"] .enhanced-card:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Memory type gradients with glow */
+        .memory-working {
+            border-left: 4px solid #f59e0b;
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), transparent);
+            box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);
+        }
+
+        .memory-episodic {
+            border-left: 4px solid #3b82f6;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), transparent);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .memory-semantic {
+            border-left: 4px solid #10b981;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), transparent);
+            box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .memory-procedural {
+            border-left: 4px solid #8b5cf6;
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15), transparent);
+            box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.1);
+        }
+
+        /* Enhanced skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.05) 25%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        [data-theme="dark"] .skeleton {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.05) 25%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0.05) 75%);
+        }
+
+        /* Enhanced scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(139, 92, 246, 0.8));
+        }
+
+        /* Enhanced status indicators */
+        .status-indicator {
+            position: relative;
+            display: inline-block;
+        }
+
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            animation: pulseRing 2s infinite;
+        }
+
+        .status-active::before {
+            background: var(--color-success);
+            box-shadow: 0 0 20px var(--color-success);
+        }
+
+        .status-completed::before {
+            background: var(--color-primary);
+            box-shadow: 0 0 20px var(--color-primary);
+        }
+
+        .status-failed::before {
+            background: var(--color-error);
+            box-shadow: 0 0 20px var(--color-error);
+        }
+
+        .status-paused::before {
+            background: var(--color-warning);
+            box-shadow: 0 0 20px var(--color-warning);
+        }
+
+        /* Enhanced data table */
+        .data-table {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+        }
+
+        .data-table tr {
+            transition: all 0.3s ease;
+        }
+
+        .data-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.01);
+        }
+
+        /* Enhanced FAB */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        .fab::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(255, 255, 255, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.7);
+        }
+
+        .fab:hover::before {
+            opacity: 1;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        /* Enhanced command palette */
+        .command-palette {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border-radius: 24px;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="dark"] .command-palette {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+        }
+
+        [data-theme="light"] .command-palette {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        /* Enhanced chart containers */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            animation: rotate-slow 20s linear infinite;
+        }
+
+        /* Enhanced markdown content */
+        .markdown-content {
+            line-height: 1.8;
+            word-wrap: break-word;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            margin-top: 2em;
+            margin-bottom: 0.75em;
+            font-weight: 700;
+            line-height: 1.3;
+            background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .markdown-content h1 {
+            font-size: 2.5em;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-content h2 {
+            font-size: 2em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-content code {
+            padding: 0.3em 0.6em;
+            margin: 0 0.2em;
+            font-size: 85%;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+
+        .markdown-content pre {
+            padding: 1.5em;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.6;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            margin: 1.5em 0;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Enhanced masonry grid */
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+        }
+
+        .masonry-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Type-specific colors with gradients */
+        .type-image {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .type-document {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .type-code {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .type-data {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .type-model {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .type-default {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            box-shadow: 0 0 20px rgba(107, 114, 128, 0.3);
+        }
+
+        /* Text truncation */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Enhanced thought chain container */
+        .thought-chain-container {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            min-height: 70vh;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .mermaid-container {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* Enhanced timeline scrubber */
+        .timeline-scrubber {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.95));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            padding: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-slider {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #1e293b, #475569);
+            outline: none;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .timeline-slider:hover {
+            opacity: 1;
+            height: 12px;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.8);
+        }
+
+        .timeline-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.8);
+        }
+
+        /* Enhanced playback controls */
+        .playback-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .playback-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .playback-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(255, 255, 255, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .playback-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        .playback-btn:hover::before {
+            opacity: 1;
+        }
+
+        .playback-btn:active {
+            transform: scale(0.95);
+        }
+
+        .playback-btn.secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 2rem;
+        }
+
+        .speed-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .speed-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .speed-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Enhanced sidebars */
+        .chain-sidebar,
+        .graph-sidebar {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            height: fit-content;
+            max-height: calc(100vh - 16rem);
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .chain-metadata,
+        .thought-details {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.25rem;
+            border-radius: 16px;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .thought-details {
+            border-left: 4px solid #3b82f6;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
+        }
+
+        .chain-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .chain-stat {
+            text-align: center;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .chain-stat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .chain-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .chain-stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        /* Enhanced graph container */
+        .graph-container {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .graph-svg {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        .graph-svg:active {
+            cursor: grabbing;
+        }
+
+        .graph-node {
+            cursor: pointer;
+            stroke-width: 3px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .graph-node:hover {
+            stroke-width: 4px;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+            transform: scale(1.1);
+        }
+
+        .graph-node.selected {
+            stroke-width: 5px;
+            filter: drop-shadow(0 12px 24px rgba(59, 130, 246, 0.8));
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .graph-link {
+            stroke-opacity: 0.4;
+            transition: all 0.3s ease;
+            stroke-linecap: round;
+        }
+
+        .graph-link:hover {
+            stroke-opacity: 0.8;
+            stroke-width: 3px;
+        }
+
+        .graph-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            fill: #e5e7eb;
+            text-anchor: middle;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Enhanced graph controls */
+        .graph-controls {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .graph-controls button {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graph-controls button:hover {
+            background: rgba(59, 130, 246, 0.4);
+            border-color: rgba(59, 130, 246, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* Enhanced graph legend */
+        .graph-legend {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 10;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-width: 220px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover {
+            transform: translateX(4px);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Enhanced graph tooltip */
+        .graph-tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Enhanced spinner */
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            background: linear-gradient(transparent, transparent),
+                linear-gradient(90deg, #3b82f6, #8b5cf6);
+            background-clip: padding-box, border-box;
+            background-origin: padding-box, border-box;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Enhanced tippy tooltips */
+        .tippy-box[data-theme~='custom'] {
+            background: linear-gradient(135deg, rgba(30, 30, 46, 0.98) 0%, rgba(49, 46, 129, 0.98) 100%);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            max-width: 380px;
+        }
+
+        .tippy-box[data-theme~='custom'] .tippy-content {
+            padding: 24px;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .tippy-box[data-theme~='custom'] .tippy-arrow {
+            color: rgba(30, 30, 46, 0.98);
+        }
+
+        .tooltip-content h4 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tooltip-content p {
+            margin-bottom: 12px;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .tooltip-content strong {
+            color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        /* Enhanced demo sections */
+        .demo-section {
+            padding: 3rem;
+            margin-bottom: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            content-visibility: auto;
+            contain-intrinsic-size: 1000px 800px;
+        }
+
+        .demo-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .demo-section-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .demo-section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+        }
+
+        .demo-section-description {
+            font-size: 1.125rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+            max-width: 80ch;
+            line-height: 1.7;
+        }
+
+        /* Hover lift effect for interactive elements */
+        .interactive {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .interactive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Gradient text effect */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Glow effect for important elements */
+        .glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Noise texture overlay */
+        .noise::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+            pointer-events: none;
+            opacity: 0.03;
+        }
+
+        /* Custom focus states */
+        *:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Selection color */
+        ::selection {
+            background: rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+
+        /* Loading states */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .demo-section {
+                padding: 2rem 1rem;
+            }
+
+            .masonry-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrolled header state */
+        header.scrolled {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body class="transition-colors duration-300 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white noise"
+    style="background: linear-gradient(135deg, rgb(15, 23, 42), rgb(30, 58, 138), rgb(15, 23, 42));">
+
+    <!-- Particle Background -->
+    <div id="particles-js"></div>
+
+    <!-- Header (Static) -->
+    <header class="glass-dark border-b border-white/10 sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3 cursor-pointer group" data-tilt data-tilt-max="10"
+                        data-tilt-speed="400">
+                        <div class="relative">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                                <i data-lucide="brain-circuit" class="w-7 h-7"></i>
+                            </div>
+                            <div class="absolute inset-0 rounded-xl border-2 border-blue-400 animate-pulse-ring"></div>
+                        </div>
+                        <div>
+                            <h1
+                                class="text-2xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:from-blue-300 group-hover:via-purple-300 group-hover:to-pink-300 transition-all animate-gradient bg-300%">
+                                UMS Explorer
+                            </h1>
+                            <p class="text-xs text-gray-400 group-hover:text-gray-300 transition-colors font-medium">
+                                UI/UX Look Book</p>
+                        </div>
+                    </div>
+                    <nav class="hidden md:flex">
+                        <ol class="flex items-center space-x-2 text-sm">
+                            <li><a href="#" class="text-blue-400 hover:text-blue-300 transition-colors">Dashboard</a>
+                            </li>
+                            <li class="text-gray-600">/</li>
+                            <li class="text-blue-400 capitalize">Components</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative search-container">
+                        <div class="relative group">
+                            <input type="text" placeholder="Search everything..."
+                                class="w-64 pl-12 pr-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all focus:w-80">
+                            <i data-lucide="search"
+                                class="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-400 transition-colors"></i>
+                            <div
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 font-medium">
+                                ⌘K</div>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-2">
+                        <div class="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50">
+                        </div>
+                        <span class="text-sm text-gray-300 font-medium">Connected</span>
+                    </div>
+                    <button
+                        class="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:scale-105 transition-all interactive">
+                        <i data-lucide="sun" class="w-5 h-5"></i>
+                    </button>
+                    <button
+                        class="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 hover:scale-105 transition-all interactive">
+                        <i data-lucide="command" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content area -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h1 class="text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 gradient-text animate-gradient bg-300%">
+                UI/UX Pattern Library</h1>
+            <p class="mt-4 text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">A visual inventory of all components
+                and interaction patterns from the UMS Explorer application.</p>
+        </div>
+
+        <!-- Core Components -->
+        <div class="demo-section" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="demo-section-title">Core Components</h2>
+            <p class="demo-section-description">Fundamental building blocks of the UI, including interactive elements
+                like command palettes, modals, and notifications.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Command Palette -->
+                <div data-aos="fade-right" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Command Palette</h3>
+                    <div class="relative h-[420px] bg-black/30 rounded-xl flex items-center justify-center p-4 glass">
+                        <div class="command-palette"
+                            style="position: relative; transform: none; top: auto; left: auto; width: 100%;">
+                            <div class="p-6">
+                                <input type="text" value="view" placeholder="Type a command or search..."
+                                    class="w-full p-4 rounded-xl bg-transparent border border-white/20 text-lg focus:outline-none focus:border-blue-400 transition-all">
+                                <div class="mt-6 max-h-80 overflow-y-auto space-y-2">
+                                    <div
+                                        class="p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 cursor-pointer transition-all hover:from-blue-500/30 hover:to-purple-500/30 border border-white/10">
+                                        <div class="flex items-center">
+                                            <i data-lucide="git-branch" class="w-6 h-6 mr-4 text-purple-400"></i>
+                                            <div class="flex-1">
+                                                <div class="font-semibold text-lg">View Workflows</div>
+                                                <div class="text-sm text-gray-400">Navigate to workflows view</div>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <kbd
+                                                    class="px-2 py-1 text-xs bg-white/10 rounded-lg border border-white/20">W</kbd>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="p-4 rounded-xl hover:bg-white/10 cursor-pointer transition-all border border-transparent hover:border-white/10">
+                                        <div class="flex items-center">
+                                            <i data-lucide="brain" class="w-6 h-6 mr-4 text-blue-400"></i>
+                                            <div class="flex-1">
+                                                <div class="font-semibold text-lg">View Memories</div>
+                                                <div class="text-sm text-gray-400">Navigate to memories view</div>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <kbd
+                                                    class="px-2 py-1 text-xs bg-white/10 rounded-lg border border-white/20">M</kbd>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="p-4 rounded-xl hover:bg-white/10 cursor-pointer transition-all border border-transparent hover:border-white/10">
+                                        <div class="flex items-center">
+                                            <i data-lucide="bar-chart-3" class="w-6 h-6 mr-4 text-green-400"></i>
+                                            <div class="flex-1">
+                                                <div class="font-semibold text-lg">View Analytics</div>
+                                                <div class="text-sm text-gray-400">Navigate to analytics view</div>
+                                            </div>
+                                            <div class="ml-auto">
+                                                <kbd
+                                                    class="px-2 py-1 text-xs bg-white/10 rounded-lg border border-white/20">A</kbd>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modals -->
+                <div data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Modal Dialog</h3>
+                    <div class="relative h-[420px] bg-black/30 rounded-xl flex items-center justify-center p-4 glass">
+                        <div class="enhanced-card rounded-2xl max-w-lg w-full" style="position: relative;" data-tilt
+                            data-tilt-max="5" data-tilt-speed="300">
+                            <div class="p-8">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-2xl font-bold gradient-text">Workflow Details</h3>
+                                    <button class="p-2 rounded-lg hover:bg-white/10 transition-colors group">
+                                        <i data-lucide="x"
+                                            class="w-5 h-5 group-hover:rotate-90 transition-transform"></i>
+                                    </button>
+                                </div>
+                                <div class="space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <h4 class="font-semibold mb-3 text-gray-300">Basic Information</h4>
+                                            <div class="space-y-3 text-sm">
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-400">Title:</span>
+                                                    <span class="font-medium">Analyze Market Trends</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-400">Status:</span>
+                                                    <span
+                                                        class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/20">active</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-400">Created:</span>
+                                                    <span class="font-medium">1/1/2024</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold mb-3 text-gray-300">Metrics</h4>
+                                            <div class="grid grid-cols-3 gap-4">
+                                                <div
+                                                    class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                                    <div class="text-2xl font-bold text-blue-400">12</div>
+                                                    <div class="text-xs text-gray-400 mt-1">Actions</div>
+                                                </div>
+                                                <div
+                                                    class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                                    <div class="text-2xl font-bold text-green-400">34</div>
+                                                    <div class="text-xs text-gray-400 mt-1">Memories</div>
+                                                </div>
+                                                <div
+                                                    class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                                    <div class="text-2xl font-bold text-purple-400">5</div>
+                                                    <div class="text-xs text-gray-400 mt-1">Artifacts</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold mb-3 text-gray-300">Description</h4>
+                                        <p
+                                            class="text-gray-300 bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-xl border border-white/10">
+                                            A multi-step workflow to analyze recent market trends for Q2, generate a
+                                            report, and create a presentation.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div data-aos="fade-up" data-aos-delay="300">
+                    <h3 class="font-semibold text-lg mb-4">Toast Notifications</h3>
+                    <div class="space-y-4">
+                        <div
+                            class="p-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-medium shadow-xl flex items-center transform hover:scale-105 transition-transform cursor-pointer">
+                            <i data-lucide="check-circle" class="w-6 h-6 mr-3 animate-bounce-subtle"></i>
+                            <span class="flex-1">Success! The operation was completed.</span>
+                            <i data-lucide="x" class="w-4 h-4 opacity-70 hover:opacity-100"></i>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 text-white font-medium shadow-xl flex items-center transform hover:scale-105 transition-transform cursor-pointer">
+                            <i data-lucide="x-circle" class="w-6 h-6 mr-3 animate-pulse"></i>
+                            <span class="flex-1">Error! Could not load the database.</span>
+                            <i data-lucide="x" class="w-4 h-4 opacity-70 hover:opacity-100"></i>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-medium shadow-xl flex items-center transform hover:scale-105 transition-transform cursor-pointer">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 mr-3"></i>
+                            <span class="flex-1">Warning: Memory usage is high.</span>
+                            <i data-lucide="x" class="w-4 h-4 opacity-70 hover:opacity-100"></i>
+                        </div>
+                        <div
+                            class="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium shadow-xl flex items-center transform hover:scale-105 transition-transform cursor-pointer">
+                            <i data-lucide="info" class="w-6 h-6 mr-3"></i>
+                            <span class="flex-1">Info: Switched to light theme.</span>
+                            <i data-lucide="x" class="w-4 h-4 opacity-70 hover:opacity-100"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Drop Zone -->
+                <div data-aos="fade-up" data-aos-delay="300">
+                    <h3 class="font-semibold text-lg mb-4">File Drop Zone</h3>
+                    <div class="enhanced-card rounded-2xl p-8 max-w-md w-full text-center" data-tilt data-tilt-max="10"
+                        data-tilt-speed="400">
+                        <div class="mb-6">
+                            <div
+                                class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float shadow-2xl">
+                                <i data-lucide="database" class="w-12 h-12"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold mb-2 gradient-text">Load Your UMS Database</h2>
+                            <p class="text-gray-400">Drag and drop your database file or click to browse</p>
+                        </div>
+                        <div
+                            class="drop-zone relative rounded-xl border-2 border-dashed border-gray-600 hover:border-blue-400 transition-all p-8 cursor-pointer group bg-gradient-to-br from-blue-400/10 to-purple-400/10 border-blue-400">
+                            <div class="text-center">
+                                <i data-lucide="upload-cloud"
+                                    class="w-14 h-14 mx-auto mb-4 text-blue-400 group-hover:animate-bounce"></i>
+                                <p class="font-medium mb-2 text-lg">Drop your database file here</p>
+                                <p class="text-sm text-gray-500">Supports .db, .sqlite, .sqlite3 files</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards & Grids -->
+        <div class="demo-section" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="demo-section-title">Cards & Grids</h2>
+            <p class="demo-section-description">Various card styles used to display summarized information in grid
+                layouts. These include stat cards, navigation cards, and data-specific cards for memories, actions, and
+                workflows.</p>
+
+            <h3 class="font-semibold text-lg mb-4">Stat & Navigation Cards</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Stat Card -->
+                <div class="enhanced-card rounded-2xl p-6 group" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-14 h-14 bg-gradient-to-br from-blue-500/30 to-blue-600/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                            <i data-lucide="brain" class="w-7 h-7 text-blue-400"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-extrabold gradient-text">1,234</div>
+                            <div class="text-sm text-gray-400 font-medium">Memories</div>
+                        </div>
+                    </div>
+                    <div class="h-3 bg-gray-700/50 rounded-full overflow-hidden backdrop-blur-sm">
+                        <div class="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full animate-pulse"
+                            style="width: 65%;"></div>
+                    </div>
+                </div>
+                <!-- Navigation Card with Tooltip -->
+                <div class="enhanced-card rounded-2xl p-6 cursor-pointer group dashboard-tooltip"
+                    data-tippy-content="<div class='tooltip-content'><h4 class='font-bold text-purple-400 mb-2'>🔄 Workflows</h4><p>Explore and analyze AI agent execution workflows - complete journeys from start to finish.</p></div>"
+                    data-tippy-allowHTML="true" data-tippy-theme="custom" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="flex items-center mb-4">
+                        <div
+                            class="w-14 h-14 bg-gradient-to-br from-purple-500/30 to-purple-600/30 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform shadow-lg">
+                            <i data-lucide="git-branch" class="w-7 h-7 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold">Workflows</h3>
+                            <p class="text-sm text-gray-400">Explore AI agent workflows</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">View all workflows</span>
+                        <i data-lucide="arrow-right"
+                            class="w-5 h-5 text-gray-400 group-hover:text-purple-400 group-hover:translate-x-2 transition-all"></i>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-lg my-4">Data-Specific Cards</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Memory Card -->
+                <div class="enhanced-card rounded-xl p-5 cursor-pointer group memory-episodic" data-aos="fade-up"
+                    data-aos-delay="200">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-400 border border-blue-500/20 font-medium">episodic</span>
+                            <span class="text-xs text-gray-500">observation</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs text-gray-500">
+                            <span class="font-medium">I: 8/10</span>
+                            <span class="font-medium">C: 95%</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-3 line-clamp-2 group-hover:text-white transition-colors">Observed
+                        a significant spike in user engagement after the new feature deployment. The API response time
+                        also improved by 15%.</p>
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <span>2h ago</span>
+                        <div class="flex items-center space-x-2 group-hover:text-blue-400 transition-colors">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            <span>15</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Action Card -->
+                <div class="enhanced-card rounded-2xl p-6 cursor-pointer group" data-aos="fade-up" data-aos-delay="300">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/20 font-medium">completed</span>
+                            <span class="text-xs text-gray-500">tool_use</span>
+                        </div>
+                        <div class="text-xs text-gray-500 font-medium">1m 15s</div>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 group-hover:text-orange-400 transition-colors">Run Data
+                        Analysis Script</h3>
+                    <p class="text-gray-400 text-sm mb-4 line-clamp-2">Executing the python script `analyze_logs.py` to
+                        process the latest server logs and extract key performance indicators.</p>
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <span>3h ago</span>
+                        <div class="flex items-center space-x-2 group-hover:text-orange-400 transition-colors">
+                            <i data-lucide="wrench" class="w-4 h-4"></i>
+                            <span>Workflow</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Workflow Card -->
+                <div class="enhanced-card rounded-2xl p-6 cursor-pointer group" data-aos="fade-up" data-aos-delay="400">
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="font-semibold text-lg group-hover:text-blue-400 transition-colors">Generate Q2
+                            Financial Report</h3>
+                        <div class="status-indicator">
+                            <span
+                                class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-400 border border-red-500/20 font-medium status-failed">failed</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-4 line-clamp-2">A workflow to gather financial data, process it,
+                        and generate a final PDF report. Failed due to an API timeout.</p>
+                    <div class="flex items-center justify-between text-sm text-gray-500">
+                        <span>1d ago</span>
+                        <div class="flex items-center space-x-4">
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="layers" class="w-4 h-4"></i>
+                                <span>8 actions</span>
+                            </span>
+                            <span class="flex items-center space-x-1">
+                                <i data-lucide="brain" class="w-4 h-4"></i>
+                                <span>21 memories</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizations -->
+        <div class="demo-section" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="demo-section-title">Data Visualizations</h2>
+            <p class="demo-section-description">Static representations of dynamic, data-driven visualizations like
+                charts and graphs. These mockups capture the look and feel without the underlying JavaScript libraries.
+            </p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Charts -->
+                <div data-aos="fade-right" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Charts (Chart.js)</h3>
+                    <div class="space-y-6">
+                        <div class="chart-container">
+                            <h3 class="text-xl font-semibold mb-6 gradient-text">Memory Level Distribution</h3>
+                            <svg viewBox="0 0 400 200" class="w-full h-auto">
+                                <defs>
+                                    <filter id="glow">
+                                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur" />
+                                            <feMergeNode in="SourceGraphic" />
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <circle cx="120" cy="100" r="70" fill="none" stroke="#f59e0b" stroke-width="30"
+                                    filter="url(#glow)" opacity="0.9"></circle>
+                                <path d="M 120 30 A 70 70 0 0 1 185.3 148.5" fill="none" stroke="#3b82f6"
+                                    stroke-width="30" filter="url(#glow)" opacity="0.9"></path>
+                                <path d="M 185.3 148.5 A 70 70 0 0 1 54.7 148.5" fill="none" stroke="#10b981"
+                                    stroke-width="30" filter="url(#glow)" opacity="0.9"></path>
+                                <text x="250" y="60" fill="#e5e7eb" font-size="14" font-weight="500">Working</text>
+                                <circle cx="235" cy="56" r="6" fill="#f59e0b" filter="url(#glow)"></circle>
+                                <text x="250" y="90" fill="#e5e7eb" font-size="14" font-weight="500">Episodic</text>
+                                <circle cx="235" cy="86" r="6" fill="#3b82f6" filter="url(#glow)"></circle>
+                                <text x="250" y="120" fill="#e5e7eb" font-size="14" font-weight="500">Semantic</text>
+                                <circle cx="235" cy="116" r="6" fill="#10b981" filter="url(#glow)"></circle>
+                            </svg>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="text-xl font-semibold mb-6 gradient-text">Activity Timeline</h3>
+                            <svg viewBox="0 0 400 200" class="w-full h-auto">
+                                <defs>
+                                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+                                    </linearGradient>
+                                    <linearGradient id="fillGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                        <stop offset="100%" style="stop-color:#10b981;stop-opacity:0" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M 20 150 C 80 80, 150 180, 220 120 S 350 20, 380 50 L 380 180 L 20 180 Z"
+                                    fill="url(#fillGradient)"></path>
+                                <path d="M 20 150 C 80 80, 150 180, 220 120 S 350 20, 380 50"
+                                    stroke="url(#lineGradient)" stroke-width="3" fill="none" filter="url(#glow)"></path>
+                                <circle cx="20" cy="150" r="6" fill="#10b981" filter="url(#glow)">
+                                    <animate attributeName="r" values="6;8;6" dur="2s" repeatCount="indefinite" />
+                                </circle>
+                                <circle cx="220" cy="120" r="6" fill="#22d3ee" filter="url(#glow)">
+                                    <animate attributeName="r" values="6;8;6" dur="2s" begin="0.5s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <circle cx="380" cy="50" r="6" fill="#3b82f6" filter="url(#glow)">
+                                    <animate attributeName="r" values="6;8;6" dur="2s" begin="1s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <line x1="0" y1="180" x2="400" y2="180" stroke="#4b5563" stroke-width="1"></line>
+                                <text x="20" y="195" fill="#9ca3af" font-size="12" font-weight="500">Mon</text>
+                                <text x="120" y="195" fill="#9ca3af" font-size="12" font-weight="500">Tue</text>
+                                <text x="220" y="195" fill="#9ca3af" font-size="12" font-weight="500">Wed</text>
+                                <text x="320" y="195" fill="#9ca3af" font-size="12" font-weight="500">Thu</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <!-- Memory Graph -->
+                <div data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Memory Graph (D3.js)</h3>
+                    <div class="grid grid-cols-12 gap-6">
+                        <div class="col-span-12 lg:col-span-8">
+                            <div class="graph-container" style="height: 420px;">
+                                <svg class="graph-svg">
+                                    <defs>
+                                        <linearGradient id="linkGradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.6" />
+                                            <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.6" />
+                                        </linearGradient>
+                                        <filter id="nodeGlow">
+                                            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                                            <feMerge>
+                                                <feMergeNode in="coloredBlur" />
+                                                <feMergeNode in="SourceGraphic" />
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+                                    <line class="graph-link" x1="100" y1="150" x2="200" y2="100"
+                                        stroke="url(#linkGradient1)" stroke-width="3"></line>
+                                    <line class="graph-link" x1="200" y1="100" x2="300" y2="150" stroke="#10b981"
+                                        stroke-width="3" opacity="0.6"></line>
+                                    <line class="graph-link" x1="200" y1="100" x2="250" y2="250" stroke="#8b5cf6"
+                                        stroke-width="3" opacity="0.6"></line>
+                                    <line class="graph-link" x1="100" y1="150" x2="250" y2="250" stroke="#3b82f6"
+                                        stroke-width="3" opacity="0.6"></line>
+                                    <circle class="graph-node selected" cx="200" cy="100" r="18" fill="#f59e0b"
+                                        stroke="#d97706" filter="url(#nodeGlow)"></circle>
+                                    <text class="graph-text" x="200" y="105" font-size="10" font-weight="700">W</text>
+                                    <text class="graph-text" x="200" y="130">Working</text>
+                                    <circle class="graph-node" cx="100" cy="150" r="15" fill="#3b82f6" stroke="#1d4ed8"
+                                        filter="url(#nodeGlow)"></circle>
+                                    <text class="graph-text" x="100" y="155" font-size="10" font-weight="700">E</text>
+                                    <text class="graph-text" x="100" y="180">Episodic</text>
+                                    <circle class="graph-node" cx="300" cy="150" r="13" fill="#10b981" stroke="#059669"
+                                        filter="url(#nodeGlow)"></circle>
+                                    <text class="graph-text" x="300" y="155" font-size="10" font-weight="700">S</text>
+                                    <text class="graph-text" x="300" y="180">Semantic</text>
+                                    <circle class="graph-node" cx="250" cy="250" r="15" fill="#8b5cf6" stroke="#7c3aed"
+                                        filter="url(#nodeGlow)"></circle>
+                                    <text class="graph-text" x="250" y="255" font-size="10" font-weight="700">P</text>
+                                    <text class="graph-text" x="250" y="280">Procedural</text>
+                                </svg>
+                                <div class="graph-legend">
+                                    <div class="text-sm font-semibold mb-3 gradient-text">Legend</div>
+                                    <div class="legend-item">
+                                        <div class="legend-color"
+                                            style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+                                        <span>Working</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color"
+                                            style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"></div>
+                                        <span>Episodic</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color"
+                                            style="background: linear-gradient(135deg, #10b981, #059669);"></div>
+                                        <span>Semantic</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color"
+                                            style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"></div>
+                                        <span>Procedural</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 lg:col-span-4">
+                            <div class="graph-sidebar h-[420px]">
+                                <h4 class="font-semibold gradient-text text-lg">Memory Details</h4>
+                                <div class="space-y-4 mt-6">
+                                    <div>
+                                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wide">Type & Level
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-yellow-500/20 to-amber-500/20 text-yellow-400 border border-yellow-500/20 font-medium">working</span>
+                                            <span class="text-sm text-gray-300">thought</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-gray-400 mb-2 uppercase tracking-wide">Content</div>
+                                        <div
+                                            class="text-sm bg-gradient-to-br from-white/10 to-white/5 p-4 rounded-xl max-h-32 overflow-y-auto border border-white/10">
+                                            <p>Initial thought process for market analysis workflow...</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                            <div class="text-xs text-gray-400 mb-1">Importance</div>
+                                            <div class="text-2xl font-bold gradient-text">9/10</div>
+                                        </div>
+                                        <div class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
+                                            <div class="text-xs text-gray-400 mb-1">Confidence</div>
+                                            <div class="text-2xl font-bold gradient-text">98%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Thought Chains -->
+                <div data-aos="fade-up" data-aos-delay="300">
+                    <h3 class="font-semibold text-lg mb-4">Thought Chains (Mermaid.js)</h3>
+                    <div class="thought-chain-container" style="min-height: 550px;">
+                        <div class="mermaid-container">
+                            <svg width="100%" height="300" viewBox="0 0 500 250" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="nodeGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="nodeGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#6b21a8;stop-opacity:1" />
+                                    </linearGradient>
+                                    <filter id="softGlow">
+                                        <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur" />
+                                            <feMergeNode in="SourceGraphic" />
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                <style>
+                                    .label {
+                                        font-family: 'Space Grotesk', sans-serif;
+                                        color: #e5e7eb
+                                    }
+
+                                    .label text {
+                                        fill: #e5e7eb;
+                                        font-weight: 600
+                                    }
+
+                                    .node rect {
+                                        rx: 12;
+                                        ry: 12;
+                                        filter: url(#softGlow)
+                                    }
+
+                                    .node.active rect {
+                                        fill: url(#nodeGradient1)
+                                    }
+
+                                    .node rect {
+                                        fill: #1f2937;
+                                        stroke: #3b82f6;
+                                        stroke-width: 2px
+                                    }
+
+                                    .flowchart-link {
+                                        stroke: rgba(139, 92, 246, 0.4);
+                                        stroke-width: 3;
+                                        fill: none
+                                    }
+                                </style>
+                                <g>
+                                    <g class="node active" transform="translate(75, 50)">
+                                        <rect x="-60" y="-25" width="120" height="50"></rect>
+                                        <text x="0" y="0" dominant-baseline="central" text-anchor="middle"
+                                            font-size="14">
+                                            <tspan>Start Goal</tspan>
+                                        </text>
+                                    </g>
+                                    <g class="node" transform="translate(250, 50)">
+                                        <rect x="-70" y="-25" width="140" height="50"></rect>
+                                        <text x="0" y="0" dominant-baseline="central" text-anchor="middle"
+                                            font-size="14">
+                                            <tspan>Analyze Data</tspan>
+                                        </text>
+                                    </g>
+                                    <g class="node" transform="translate(425, 50)">
+                                        <rect x="-60" y="-25" width="120" height="50"></rect>
+                                        <text x="0" y="0" dominant-baseline="central" text-anchor="middle"
+                                            font-size="14">
+                                            <tspan>Find Insight</tspan>
+                                        </text>
+                                    </g>
+                                    <g class="node" transform="translate(250, 150)">
+                                        <rect x="-80" y="-25" width="160" height="50" fill="url(#nodeGradient2)"></rect>
+                                        <text x="0" y="0" dominant-baseline="central" text-anchor="middle"
+                                            font-size="14">
+                                            <tspan>Branch: Get more data</tspan>
+                                        </text>
+                                    </g>
+                                    <g class="node" transform="translate(425, 200)">
+                                        <rect x="-70" y="-25" width="140" height="50"></rect>
+                                        <text x="0" y="0" dominant-baseline="central" text-anchor="middle"
+                                            font-size="14">
+                                            <tspan>Conclusion</tspan>
+                                        </text>
+                                    </g>
+                                    <path d="M 135 50 L 180 50" class="flowchart-link">
+                                        <animate attributeName="stroke-dasharray" values="0 150;150 0" dur="2s"
+                                            repeatCount="indefinite" />
+                                    </path>
+                                    <path d="M 320 50 L 365 50" class="flowchart-link">
+                                        <animate attributeName="stroke-dasharray" values="0 150;150 0" dur="2s"
+                                            begin="0.5s" repeatCount="indefinite" />
+                                    </path>
+                                    <path d="M 250 75 L 250 125" class="flowchart-link">
+                                        <animate attributeName="stroke-dasharray" values="0 150;150 0" dur="2s"
+                                            begin="1s" repeatCount="indefinite" />
+                                    </path>
+                                    <path d="M 425 75 L 425 175" class="flowchart-link">
+                                        <animate attributeName="stroke-dasharray" values="0 150;150 0" dur="2s"
+                                            begin="1.5s" repeatCount="indefinite" />
+                                    </path>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="timeline-scrubber">
+                            <div class="playback-controls">
+                                <button class="playback-btn secondary"><i data-lucide="skip-back"
+                                        class="w-6 h-6"></i></button>
+                                <button class="playback-btn"><i data-lucide="play" class="w-7 h-7"></i></button>
+                                <button class="playback-btn secondary"><i data-lucide="skip-forward"
+                                        class="w-6 h-6"></i></button>
+                                <div class="speed-control">
+                                    <span class="text-xs text-gray-400 font-medium">Speed:</span>
+                                    <button class="speed-btn">0.5x</button>
+                                    <button class="speed-btn active">1x</button>
+                                    <button class="speed-btn">2x</button>
+                                </div>
+                            </div>
+                            <input type="range" min="0" max="100" value="30" class="timeline-slider">
+                        </div>
+                    </div>
+                </div>
+                <!-- Artifact Gallery -->
+                <div data-aos="fade-up" data-aos-delay="400">
+                    <h3 class="font-semibold text-lg mb-4">Artifact Gallery (Masonry Grid)</h3>
+                    <div class="masonry-grid">
+                        <div class="masonry-item enhanced-card rounded-xl overflow-hidden cursor-pointer group"
+                            data-tilt data-tilt-max="5" data-tilt-speed="300">
+                            <div class="relative overflow-hidden bg-gray-800 h-48">
+                                <img loading="lazy" decoding="async"
+                                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=600"
+                                    alt="Abstract render" width="600" height="400"
+                                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-semibold text-white line-clamp-1 text-lg">Abstract Wave Render</h3>
+                                <p class="text-sm text-gray-400 line-clamp-2 mb-4 mt-2">Generated via a prompt about
+                                    fluid dynamics and color theory.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span
+                                        class="px-3 py-1 bg-gradient-to-r from-pink-500/20 to-rose-500/20 text-pink-300 rounded-full text-xs font-medium border border-pink-500/20">3D-render</span>
+                                    <span
+                                        class="px-3 py-1 bg-gradient-to-r from-pink-500/20 to-rose-500/20 text-pink-300 rounded-full text-xs font-medium border border-pink-500/20">abstract</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="masonry-item enhanced-card rounded-xl overflow-hidden cursor-pointer group"
+                            data-tilt data-tilt-max="5" data-tilt-speed="300">
+                            <div class="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 h-40 p-5">
+                                <div class="flex items-center mb-3">
+                                    <i data-lucide="code" class="w-5 h-5 mr-2 text-green-400"></i>
+                                    <span class="text-sm text-green-400 font-medium">Python</span>
+                                </div>
+                                <pre class="text-xs text-gray-300 overflow-hidden font-mono"><code>def analyze_data(df):
+    """Analyzes the dataframe."""
+    summary = df.describe()
+    corr = df.corr()
+    return summary, corr</code></pre>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-semibold text-white line-clamp-1 text-lg">Data Analysis Snippet</h3>
+                                <p class="text-sm text-gray-400 line-clamp-2 mb-3 mt-2">Core function for pandas
+                                    dataframe analysis.</p>
+                            </div>
+                        </div>
+                        <div class="masonry-item enhanced-card rounded-xl overflow-hidden cursor-pointer group"
+                            data-tilt data-tilt-max="5" data-tilt-speed="300">
+                            <div
+                                class="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 h-32 flex items-center justify-center">
+                                <div class="text-center group-hover:scale-105 transition-transform">
+                                    <i data-lucide="file-text" class="w-16 h-16 mx-auto mb-3 text-blue-400"></i>
+                                    <div class="text-sm font-semibold text-gray-300">Q2_Report.md</div>
+                                </div>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-semibold text-white line-clamp-1 text-lg">Q2 Report Draft</h3>
+                                <p class="text-sm text-gray-400 line-clamp-2 mb-3 mt-2">Initial draft of the quarterly
+                                    financial report in Markdown format.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forms & Inputs -->
+        <div class="demo-section" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="demo-section-title">Forms & Inputs</h2>
+            <p class="demo-section-description">A collection of input controls, including advanced search, filters, and
+                forms used for creating and editing data.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Advanced Search & Filters -->
+                <div data-aos="fade-right" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Search & Filters</h3>
+                    <div class="space-y-4">
+                        <!-- Global Search with Suggestions -->
+                        <div class="relative">
+                            <input type="text" value="analyze" placeholder="Search everything..."
+                                class="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all">
+                            <i data-lucide="search"
+                                class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                            <div
+                                class="absolute top-full mt-2 w-full p-2 rounded-xl bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-xl border border-white/20 z-10 shadow-2xl">
+                                <div
+                                    class="p-3 hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20 rounded-lg cursor-pointer transition-all group">
+                                    <div class="flex items-center">
+                                        <i data-lucide="git-branch"
+                                            class="w-5 h-5 mr-3 text-gray-400 group-hover:text-purple-400 transition-colors"></i>
+                                        <div>
+                                            <div class="text-sm font-semibold group-hover:text-white transition-colors">
+                                                Analyze Market Trends</div>
+                                            <div class="text-xs text-gray-500">Workflow</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="p-3 hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20 rounded-lg cursor-pointer transition-all group">
+                                    <div class="flex items-center">
+                                        <i data-lucide="brain"
+                                            class="w-5 h-5 mr-3 text-gray-400 group-hover:text-blue-400 transition-colors"></i>
+                                        <div>
+                                            <div class="text-sm font-semibold group-hover:text-white transition-colors">
+                                                Analysis of the new user cohort...</div>
+                                            <div class="text-xs text-gray-500">Memory</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Filter Controls -->
+                        <div class="flex items-center space-x-3">
+                            <select
+                                class="bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 transition-all cursor-pointer">
+                                <option>All Status</option>
+                                <option>Active</option>
+                                <option>Completed</option>
+                                <option>Failed</option>
+                            </select>
+                            <select
+                                class="bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-400 transition-all cursor-pointer">
+                                <option>All Types</option>
+                                <option>Tool Use</option>
+                                <option>Observation</option>
+                                <option>Reasoning</option>
+                            </select>
+                            <input type="text" placeholder="Search actions..."
+                                class="bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-sm w-64 focus:outline-none focus:border-blue-400 transition-all">
+                        </div>
+                    </div>
+                </div>
+                <!-- Goal Creation Form -->
+                <div data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="font-semibold text-lg mb-4">Creation Form</h3>
+                    <div class="enhanced-card rounded-2xl p-8">
+                        <form class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2 text-gray-300">Title *</label>
+                                <input type="text" required
+                                    class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:border-yellow-400 focus:bg-white/15 transition-all"
+                                    placeholder="Enter goal title">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2 text-gray-300">Priority</label>
+                                    <select
+                                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:border-yellow-400 transition-all cursor-pointer">
+                                        <option>Low</option>
+                                        <option selected>Medium</option>
+                                        <option>High</option>
+                                        <option>Critical</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2 text-gray-300">Status</label>
+                                    <select
+                                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:border-yellow-400 transition-all cursor-pointer">
+                                        <option>Pending</option>
+                                        <option>In Progress</option>
+                                        <option>Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-white/10">
+                                <button type="button"
+                                    class="px-6 py-2.5 text-gray-400 hover:text-white transition-colors font-medium">Cancel</button>
+                                <button type="submit"
+                                    class="px-8 py-2.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">Create
+                                    Goal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Markdown Content -->
+        <div class="demo-section" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="demo-section-title">Styled Content</h2>
+            <p class="demo-section-description">How standard content, like Markdown, is styled within the application
+                for readability and consistency.</p>
+            <div
+                class="markdown-content bg-gradient-to-br from-white/10 to-white/5 p-8 rounded-2xl border border-white/10 backdrop-blur-md">
+                <h1>This is a H1 Heading</h1>
+                <p>This is a paragraph of text. It can contain <strong>bold text</strong>, <em>italic text</em>, and
+                    <code>inline code snippets</code>. Links are also styled, like this <a href="#"
+                        class="text-blue-400 hover:text-blue-300 underline decoration-blue-400/30 hover:decoration-blue-300 transition-all">link
+                        to another page</a>.</p>
+                <h2>This is a H2 Heading</h2>
+                <ul class="list-disc list-inside space-y-2 my-4 ml-4">
+                    <li>An item in an unordered list.</li>
+                    <li>Another item.
+                        <ol class="list-decimal list-inside space-y-1 mt-2 ml-4">
+                            <li>A sub-item in an ordered list.</li>
+                            <li>Another sub-item.</li>
+                        </ol>
+                    </li>
+                </ul>
+                <h3>This is a H3 Heading</h3>
+                <pre><code class="language-python"># This is a Python code block
+import numpy as np
+
+def hello_world():
+    print("Hello from the UMS Explorer!")
+    return np.random.rand(5)
+</code></pre>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button class="fab" title="Open Command Palette">
+        <i data-lucide="command" class="w-7 h-7"></i>
+    </button>
+    <script>
+        // Wait for all deferred scripts to load
+        window.addEventListener('load', () => {
+            // Initialize Lucide Icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Initialize AOS
+            if (typeof AOS !== 'undefined') {
+                AOS.init({
+                    duration: 800,
+                    easing: 'ease-out-cubic',
+                    once: true,
+                    offset: 50
+                });
+            }
+
+            // Initialize Tippy
+            if (typeof tippy !== 'undefined') {
+                tippy('.dashboard-tooltip', {
+                    theme: 'custom',
+                    animation: 'scale',
+                    duration: [300, 200],
+                    delay: [500, 0],
+                    interactive: false,
+                    placement: 'top',
+                    maxWidth: 380,
+                    allowHTML: true,
+                });
+            }
+
+            // Initialize VanillaTilt with lazy loading
+            if (typeof VanillaTilt !== 'undefined') {
+                const lazyTilt = (entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            VanillaTilt.init(entry.target, {
+                                max: 15,
+                                speed: 400,
+                                glare: true,
+                                "max-glare": 0.2,
+                            });
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                };
+
+                const tiltObserver = new IntersectionObserver(lazyTilt, { rootMargin: "200px" });
+                document.querySelectorAll('[data-tilt]').forEach(el => tiltObserver.observe(el));
+            }
+
+            // Initialize Particles
+            if (typeof particlesJS !== 'undefined') {
+                const initParticles = () => particlesJS('particles-js', {
+                    "particles": {
+                        "number": {
+                            "value": 50,
+                            "density": {
+                                "enable": true,
+                                "value_area": 800
+                            }
+                        },
+                        "color": {
+                            "value": ["#3b82f6", "#8b5cf6", "#ec4899"]
+                        },
+                        "shape": {
+                            "type": "circle"
+                        },
+                        "opacity": {
+                            "value": 0.3,
+                            "random": true,
+                            "anim": {
+                                "enable": true,
+                                "speed": 1,
+                                "opacity_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "size": {
+                            "value": 3,
+                            "random": true,
+                            "anim": {
+                                "enable": true,
+                                "speed": 2,
+                                "size_min": 0.1,
+                                "sync": false
+                            }
+                        },
+                        "line_linked": {
+                            "enable": true,
+                            "distance": 150,
+                            "color": "#8b5cf6",
+                            "opacity": 0.2,
+                            "width": 1
+                        },
+                        "move": {
+                            "enable": true,
+                            "speed": 0.5,
+                            "direction": "none",
+                            "random": false,
+                            "straight": false,
+                            "out_mode": "out",
+                            "bounce": false,
+                            "attract": {
+                                "enable": false,
+                                "rotateX": 600,
+                                "rotateY": 1200
+                            }
+                        }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": {
+                            "onhover": {
+                                "enable": true,
+                                "mode": "grab"
+                            },
+                            "onclick": {
+                                "enable": true,
+                                "mode": "push"
+                            },
+                            "resize": true
+                        },
+                        "modes": {
+                            "grab": {
+                                "distance": 140,
+                                "line_linked": {
+                                    "opacity": 0.5
+                                }
+                            },
+                            "push": {
+                                "particles_nb": 4
+                            }
+                        }
+                    },
+                    "retina_detect": true
+                });
+
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(initParticles);
+                } else {
+                    setTimeout(initParticles, 0);
+                }
+            }
+
+            // Initialize GSAP animations
+            if (typeof gsap !== 'undefined') {
+                gsap.to(".fab", {
+                    rotation: 360,
+                    duration: 20,
+                    repeat: -1,
+                    ease: "none"
+                });
+
+                const fab = document.querySelector('.fab');
+                if (fab) {
+                    fab.addEventListener('mouseenter', function () {
+                        gsap.to(this, {
+                            scale: 1.2,
+                            duration: 0.3,
+                            ease: "power2.out"
+                        });
+                    });
+
+                    fab.addEventListener('mouseleave', function () {
+                        gsap.to(this, {
+                            scale: 1,
+                            duration: 0.3,
+                            ease: "power2.out"
+                        });
+                    });
+                }
+            }
+
+            // Optimized scroll handler
+            const headerEl = document.querySelector('header');
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    ticking = true;
+                    requestAnimationFrame(() => {
+                        headerEl.classList.toggle('scrolled', window.scrollY > 50);
+                        ticking = false;
+                    });
+                }
+            }, { passive: true });
+
+            // Add interactive hover effects to cards
+            document.querySelectorAll('.enhanced-card').forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    requestAnimationFrame(() => {
+                        this.style.transform = 'translate3d(0, -4px, 0) scale(1.02)';
+                    });
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    requestAnimationFrame(() => {
+                        this.style.transform = 'translate3d(0, 0, 0) scale(1)';
+                    });
+                });
+            });
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    const searchInput = document.querySelector('input[type="text"]');
+                    if (searchInput) searchInput.focus();
+                }
+            }, { passive: false });
+        });
+    </script>
+</body>
+
+</html>

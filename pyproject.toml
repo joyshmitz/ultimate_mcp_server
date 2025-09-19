@@ -106,10 +106,10 @@ dependencies = [
 
 [project.optional-dependencies]
 advanced = [
-  "torch==2.8.0.dev20250428+cu126",
-  "torchvision==0.22.0.dev20250428+cu126",
-  "torchaudio==2.6.0.dev20250428+cu126",
-  "pytorch-triton==3.3.0+git96316ce5",
+  "torch",
+  "torchvision",
+  "torchaudio",
+  "pytorch-triton",
   "transformers>=0",
   "accelerate>=0",
 ]
@@ -146,19 +146,9 @@ all = ["ultimate_mcp_server[advanced,dev,docs]"]
 name = "pypi"
 url  = "https://pypi.org/simple"
 
-[[tool.uv.index]]
-name = "torch-nightly-cu126"
-url  = "https://download.pytorch.org/whl/nightly/cu126"
-explicit = true               # only packages you pin may come from here
-
-[tool.uv.sources]
-torch       = { index = "torch-nightly-cu126" }
-torchvision = { index = "torch-nightly-cu126" }
-torchaudio  = { index = "torch-nightly-cu126" }
-pytorch-triton = { index = "torch-nightly-cu126" }
-
 [tool.uv.pip]
 prerelease = "allow"
+torch-backend = "auto"
 
 [project.urls]
 Homepage = "https://github.com/Dicklesworthstone/ultimate_mcp_server"

@@ -3360,6 +3360,89 @@ class EnhancedLocator:  # Keep class, but it's used INTERNALLY by standalone fun
 
 
 # --- Smart Actions (Helpers using EnhancedLocator) ---
+async def _detect_web_obstacles(page: Page) -> Dict[str, Any]:
+    """Detect common web obstacles that might interfere with automation."""
+    obstacles = {
+        "captcha_detected": False,
+        "cookie_banner": False,
+        "cloudflare_challenge": False,
+        "login_required": False,
+        "details": []
+    }
+    
+    try:
+        # Comprehensive CAPTCHA detection
+        captcha_js = """() => {
+            const indicators = [];
+            
+            // Text-based detection
+            if (document.body.innerText.toLowerCase().includes('captcha') ||
+                document.body.innerText.toLowerCase().includes('recaptcha') ||
+                document.body.innerText.toLowerCase().includes('i\'m not a robot')) {
+                indicators.push('captcha_text_found');
+            }
+            
+            // Element-based detection
+            if (document.querySelector('iframe[title*="captcha" i]') ||
+                document.querySelector('iframe[src*="captcha" i]') ||
+                document.querySelector('[id*="captcha" i]') ||
+                document.querySelector('[class*="captcha" i]') ||
+                document.querySelector('div[class*="recaptcha" i]') ||
+                document.querySelector('.g-recaptcha') ||
+                document.querySelector('#recaptcha')) {
+                indicators.push('captcha_element_found');
+            }
+            
+            // Cookie banner detection
+            if (document.querySelector('[class*="cookie" i]') ||
+                document.querySelector('[id*="cookie" i]') ||
+                document.body.innerText.toLowerCase().includes('accept cookies') ||
+                document.body.innerText.toLowerCase().includes('cookie policy')) {
+                indicators.push('cookie_banner_found');
+            }
+            
+            // Cloudflare detection
+            if (document.body.innerText.includes('Cloudflare') &&
+                (document.body.innerText.includes('checking') || 
+                 document.body.innerText.includes('security'))) {
+                indicators.push('cloudflare_challenge');
+            }
+            
+            // Login detection
+            if (document.querySelector('input[type="password"]') &&
+                (document.body.innerText.toLowerCase().includes('sign in') ||
+                 document.body.innerText.toLowerCase().includes('log in') ||
+                 document.body.innerText.toLowerCase().includes('login'))) {
+                indicators.push('login_required');
+            }
+            
+            return indicators;
+        }"""
+        
+        detected_indicators = await page.evaluate(captcha_js)
+        
+        # Process results
+        for indicator in detected_indicators:
+            if 'captcha' in indicator:
+                obstacles["captcha_detected"] = True
+                obstacles["details"].append(f"CAPTCHA detected: {indicator}")
+            elif 'cookie' in indicator:
+                obstacles["cookie_banner"] = True
+                obstacles["details"].append(f"Cookie banner detected: {indicator}")
+            elif 'cloudflare' in indicator:
+                obstacles["cloudflare_challenge"] = True
+                obstacles["details"].append(f"Cloudflare challenge detected: {indicator}")
+            elif 'login' in indicator:
+                obstacles["login_required"] = True
+                obstacles["details"].append(f"Login requirement detected: {indicator}")
+        
+        return obstacles
+        
+    except Exception as e:
+        logger.warning(f"Error detecting web obstacles: {e}")
+        return obstacles
+
+
 @resilient(max_attempts=3, backoff=0.5)
 async def smart_click(
     page: Page, task_hint: str, *, target_kwargs: Optional[Dict] = None, timeout_ms: int = 5000
@@ -3384,6 +3467,49 @@ async def smart_click(
         else:
             # No target_kwargs provided either
             raise ToolInputError("smart_click requires a non-empty 'task_hint'.")
+
+    # First, detect web obstacles that might interfere with automation
+    try:
+        obstacles = await _detect_web_obstacles(page)
+        
+        # Handle CAPTCHA detection - fail early if trying to click CAPTCHA
+        if obstacles["captcha_detected"] and ("captcha" in effective_task_hint.lower() or "recaptcha" in effective_task_hint.lower()):
+            logger.error(f"Cannot click CAPTCHA element: '{effective_task_hint}'. CAPTCHAs are designed to prevent automation.")
+            raise ToolError(
+                f"CAPTCHA interaction blocked for task: '{effective_task_hint}'. "
+                "Manual intervention required. CAPTCHAs cannot be automatically solved."
+            )
+        
+        # Log any obstacles detected for diagnostic purposes
+        if any([obstacles["captcha_detected"], obstacles["cookie_banner"], obstacles["cloudflare_challenge"], obstacles["login_required"]]):
+            await _log("smart_click_obstacles_detected", task_hint=effective_task_hint, obstacles=obstacles)
+            logger.info(f"Web obstacles detected before click attempt: {obstacles['details']}")
+            
+            # Try to handle cookie banners automatically
+            if obstacles["cookie_banner"]:
+                logger.info("Attempting to dismiss cookie banner before main click action...")
+                cookie_selectors = [
+                    'button:has-text("Accept")', 'button:has-text("Accept All")', 
+                    'button:has-text("OK")', 'button:has-text("Allow")',
+                    '[id*="accept" i]', '[class*="accept" i]'
+                ]
+                for selector in cookie_selectors:
+                    try:
+                        cookie_btn = page.locator(selector).first
+                        await cookie_btn.click(timeout=2000)
+                        logger.info(f"Successfully dismissed cookie banner using: {selector}")
+                        await asyncio.sleep(0.5)  # Brief pause after dismissal
+                        break
+                    except Exception:
+                        continue
+            
+            # Give Cloudflare challenges a moment to complete
+            if obstacles["cloudflare_challenge"]:
+                logger.info("Cloudflare challenge detected, waiting briefly...")
+                await asyncio.sleep(3)
+                
+    except Exception as obstacle_err:
+        logger.warning(f"Error during obstacle detection: {obstacle_err}. Proceeding with click attempt.")
 
     loc_helper = EnhancedLocator(page)
     # Prepare log details, prioritizing target_kwargs if available
@@ -6394,6 +6520,7 @@ async def run_steps(
         step_result["success"] = False  # Default to failure
         start_time = time.monotonic()
         step_num = i + 1
+        should_break = False  # Initialize break flag for this step
 
         if not action:
             step_result["error"] = f"Step {step_num}: Missing 'action' key."
@@ -6413,11 +6540,35 @@ async def run_steps(
                     raise ToolInputError(
                         f"Step {step_num} ('click'): Missing required argument 'task_hint'."
                     )
-                # Use the smart_click helper
-                click_success = await smart_click(
-                    page, task_hint=hint, target_kwargs=target_fallback
-                )
-                step_result["success"] = click_success  # Should be True if no exception
+                
+                # Check for and handle common obstacles like reCAPTCHA
+                if "recaptcha" in hint.lower() or "captcha" in hint.lower():
+                    # Try to detect CAPTCHA presence first
+                    captcha_js = """() => {
+                        return document.body.innerText.toLowerCase().includes('captcha') || 
+                               document.querySelector('iframe[title*=captcha]') !== null ||
+                               document.querySelector('[id*=captcha]') !== null ||
+                               document.querySelector('[class*=captcha]') !== null ||
+                               document.querySelector('div[class*="recaptcha"]') !== null;
+                    }"""
+                    captcha_detected = await page.evaluate(captcha_js)
+                    if captcha_detected:
+                        logger.warning(f"Step {step_num}: CAPTCHA detected but cannot be automatically solved. Marking as failed.")
+                        step_result["error"] = "CAPTCHA detected - requires manual intervention"
+                        step_result["success"] = False
+                        # Continue to finally block without raising exception
+                    else:
+                        # Use the smart_click helper
+                        click_success = await smart_click(
+                            page, task_hint=hint, target_kwargs=target_fallback
+                        )
+                        step_result["success"] = click_success
+                else:
+                    # Use the smart_click helper
+                    click_success = await smart_click(
+                        page, task_hint=hint, target_kwargs=target_fallback
+                    )
+                    step_result["success"] = click_success  # Should be True if no exception
 
             elif action == "type":
                 hint = step.get("task_hint")
@@ -6552,10 +6703,15 @@ async def run_steps(
             step_result["error"] = error_msg
             step_result["success"] = False  # Ensure success is false on error
             logger.warning(f"Macro Step {step_num} ('{action}') failed: {error_msg}")
+            
+            # Special handling for CAPTCHA-related errors
+            if "captcha" in str(e).lower() or "recaptcha" in str(e).lower():
+                logger.warning(f"Step {step_num}: CAPTCHA-related error detected. Suggesting manual intervention.")
+                step_result["error"] = f"CAPTCHA-related error: {error_msg}. Manual intervention may be required."
+            
             # Record duration even on failure
             duration_ms = int((time.monotonic() - start_time) * 1000)
             step_result["duration_ms"] = duration_ms
-            # Optionally re-raise critical errors or break loop? For now, just record failure.
 
         finally:
             # Always log the step result and append to the list
@@ -6566,15 +6722,17 @@ async def run_steps(
                 del log_details["result"]
             await _log("macro_step_result", **log_details)
             results.append(step_result)
+            
             # If a 'finish' action succeeded, stop executing further steps
-            if action == "finish" and step_result["success"]:
+            if action == "finish" and step_result.get("success", False):
                 logger.info(
                     f"Stopping macro execution after successful 'finish' action at step {step_num}."
                 )
-                should_break = True  # Set break flag instead of using break directly
+                should_break = True
 
-        # Check break flag outside the finally block
+        # Check break flag - this now works because should_break is properly scoped
         if should_break:
+            logger.info(f"Breaking execution loop after step {step_num}")
             break
 
     return results  # Return list of results for all executed steps

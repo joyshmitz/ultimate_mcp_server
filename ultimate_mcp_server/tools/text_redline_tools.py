@@ -13,10 +13,11 @@ import subprocess
 import tempfile
 import textwrap
 import time
+from dataclasses import dataclass
 from copy import deepcopy
 from datetime import timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import markdown
 from bs4 import BeautifulSoup
@@ -155,6 +156,19 @@ def _get_normalized_full_text(el: _Element) -> str:
 # Avoid volatile attributes like style, or overly common ones like class (unless very specific)
 _SIGNIFICANT_ATTRIBUTES = {"id", "href", "src", "name", "value", "title", "alt", "rel", "type"}
 # Consider adding data-* attributes if they are known to be stable identifiers in your source HTML
+
+# --- Fuzzy move detection configuration ---
+_MOVE_MIN_TOKENS: int = 5         # Ignore tiny fragments; raise to 8 for stricter pairing
+_MOVE_MIN_CHARS: int = 24         # Shorter text tends to be noise
+_MOVE_SIM_THRESHOLD: float = 0.82 # 0..1; lower to catch more, higher to be stricter
+_MOVE_MAX_CANDIDATES: int = 2000  # Safety bound for O(N*M) matching
+# Tags considered "blocky enough" to attempt fuzzy move pairing even if tags differ
+_BLOCK_TAGS: Set[str] = {
+    "p","li","ul","ol","h1","h2","h3","h4","h5","h6","blockquote","pre","code",
+    "section","article","aside","figure","figcaption","table","thead","tbody","tr","td","th","dl","dt","dd"
+}
+# Attributes that help anchor identity/context
+_ANCHOR_ATTRS: Set[str] = {"id","name","href","src","data-id","data-key","data-uid","aria-label","title"}
 
 def _inject_synthetic_ids(root: _Element, *, attr: str = "data-diff-id") -> None:
     """Inject synthetic IDs into elements based on tag, normalized full text,
@@ -517,6 +531,8 @@ class RedlineXMLFormatter:
                     logger.warning(f"Insert seems move target but MoveNode lacks ID: {action}")
 
         if is_move_target and move_id:
+            if not any(isinstance(a, MoveNode) for a in self._actions):
+                self.processed_actions["moves"] += 1
             pass
         else:
             self._add_diff_attribute(node_to_insert, "op", "insert")
@@ -1282,6 +1298,343 @@ def _generate_markdown_summary(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#                         Fuzzy move pairing helpers
+# ─────────────────────────────────────────────────────────────────────────────
+@dataclass
+class _NodeFP:
+    xpath: str
+    tag: str
+    text_norm: str
+    tokens: List[str]
+    shingles: Set[str]
+    simhash: int
+    anchor_sig: str
+    attrs_sig: str
+    length: int
+    node: _Element
+    parent_xpath: Optional[str] = None
+    pos: Optional[int] = None
+    action_index: int = -1  # index in actions list
+
+
+def _tokenize_for_fp(s: str) -> List[str]:
+    return re.findall(r"[A-Za-z0-9]+", s.lower())
+
+
+def _make_shingles(tokens: List[str], k: int = 4) -> Set[str]:
+    if len(tokens) < k:
+        return set(tokens) if tokens else set()
+    return {" ".join(tokens[i : i + k]) for i in range(0, len(tokens) - k + 1)}
+
+
+def _simhash64(items: Set[str]) -> int:
+    # Fast 64-bit simhash over shingles/tokens
+    if not items:
+        return 0
+    acc = [0] * 64
+    for it in items:
+        h = int(hashlib.blake2b(it.encode("utf-8", "replace"), digest_size=8).hexdigest(), 16)
+        for b in range(64):
+            acc[b] += 1 if (h >> b) & 1 else -1
+    out = 0
+    for b, v in enumerate(acc):
+        if v >= 0:
+            out |= 1 << b
+    return out
+
+
+def _simhash_sim(a: int, b: int) -> float:
+    if a == b:
+        return 1.0
+    x = a ^ b
+    try:
+        d = x.bit_count()
+    except AttributeError:  # pragma: no cover - Python < 3.8 fallback
+        d = bin(x).count("1")
+    return 1.0 - (d / 64.0)
+
+
+def _ancestor_anchor_signature(el: _Element, depth: int = 4) -> str:
+    parts: List[str] = []
+    p = el.getparent()
+    steps = 0
+    while p is not None and steps < depth:
+        tid = p.get("id") or ""
+        cls = p.get("class") or ""
+        name = p.tag.lower() if hasattr(p, "tag") else ""
+        parts.append(f"{name}#{tid}.{cls}".strip("."))
+        p = p.getparent()
+        steps += 1
+    parts.reverse()
+    return "/".join(parts)
+
+
+def _attrs_signature(el: _Element) -> str:
+    if el is None or not hasattr(el, "attrib"):
+        return ""
+    kv = []
+    for k, v in el.attrib.items():
+        k_l = k.lower()
+        if k_l in _ANCHOR_ATTRS or k_l.startswith("data-"):
+            kv.append(f"{k_l}={_normalize_text(v)}")
+    kv.sort()
+    return "|".join(kv)
+
+
+def _build_fp_for_element(el: _Element, xpath: str) -> Optional[_NodeFP]:
+    if el is None:
+        return None
+    txt = _get_normalized_full_text(el)
+    if len(txt) < _MOVE_MIN_CHARS:
+        return None
+    toks = _tokenize_for_fp(txt)
+    if len(toks) < _MOVE_MIN_TOKENS:
+        return None
+    sh = _make_shingles(toks, 4) or set(toks)
+    tag = el.tag.lower() if hasattr(el, "tag") else ""
+    return _NodeFP(
+        xpath=xpath,
+        tag=tag,
+        text_norm=txt,
+        tokens=toks,
+        shingles=sh,
+        simhash=_simhash64(sh),
+        anchor_sig=_ancestor_anchor_signature(el),
+        attrs_sig=_attrs_signature(el),
+        length=len(toks),
+        node=el,
+    )
+
+
+def _resolve_insert_element(
+    ins_action: Any, mod_doc: _ElementTree
+) -> Tuple[Optional[_Element], Optional[str], Optional[int]]:
+    parent_xpath = _safe_get_attr(ins_action, "parent_xpath", "target")
+    pos = _safe_get_attr(ins_action, "pos", "position")
+    sib_xpath = _safe_get_attr(ins_action, "sibling_xpath")
+    el = _safe_get_attr(ins_action, "node")
+    if isinstance(el, _Element):
+        try:
+            if parent_xpath:
+                parent = _get_element_by_xpath_from_tree(parent_xpath, mod_doc)
+                if parent is not None:
+                    target_idx = None
+                    target_text = _get_normalized_full_text(el)[:40]
+                    for i, ch in enumerate(list(parent)):
+                        if getattr(ch, "tag", None) == getattr(el, "tag", None):
+                            if _get_normalized_full_text(ch)[:40] == target_text:
+                                target_idx = i
+                                break
+                    if isinstance(pos, int) or (isinstance(pos, str) and pos.isdigit()):
+                        idx = int(pos)
+                    elif target_idx is not None:
+                        idx = target_idx
+                    else:
+                        idx = len(parent)
+                    return el, parent_xpath, idx
+        except Exception:
+            pass
+
+    if parent_xpath:
+        parent = _get_element_by_xpath_from_tree(parent_xpath, mod_doc)
+        if parent is not None:
+            try:
+                if isinstance(pos, int) or (isinstance(pos, str) and str(pos).isdigit()):
+                    return parent[int(pos)], parent_xpath, int(pos)
+                if pos in ("before", "after") and sib_xpath:
+                    sib = _get_element_by_xpath_from_tree(sib_xpath, mod_doc)
+                    if sib is not None:
+                        par = sib.getparent()
+                        idx = par.index(sib) + (1 if pos == "after" else 0)
+                        try:
+                            return par[idx], par.getroottree().getpath(par), idx
+                        except Exception:
+                            return None, par.getroottree().getpath(par), idx
+                idx = len(parent)
+                try:
+                    return parent[idx], parent_xpath, idx
+                except Exception:
+                    return None, parent_xpath, idx
+            except Exception:
+                return None, parent_xpath, None
+
+    if sib_xpath:
+        sib = _get_element_by_xpath_from_tree(sib_xpath, mod_doc)
+        if sib is not None:
+            par = sib.getparent()
+            idx = par.index(sib) + (1 if pos == "after" else 0) if pos in ("before", "after") else len(par)
+            try:
+                return par[idx], par.getroottree().getpath(par), idx
+            except Exception:
+                return None, par.getroottree().getpath(par), idx
+
+    return None, None, None
+
+
+def _score_pair(a: _NodeFP, b: _NodeFP) -> float:
+    seq = difflib.SequenceMatcher(None, a.text_norm, b.text_norm, autojunk=False).ratio()
+    jac = len(a.shingles & b.shingles) / max(1, len(a.shingles | b.shingles))
+    content = max(seq, jac)
+    shs = _simhash_sim(a.simhash, b.simhash)
+    anc = difflib.SequenceMatcher(None, a.anchor_sig, b.anchor_sig, autojunk=False).ratio()
+    attr = 1.0 if (a.attrs_sig and a.attrs_sig == b.attrs_sig) else (0.5 if a.attrs_sig and b.attrs_sig else 0.0)
+    tag_bonus = 0.05 if (a.tag == b.tag) else (0.03 if (a.tag in _BLOCK_TAGS and b.tag in _BLOCK_TAGS) else -0.10)
+    score = 0.45 * content + 0.25 * shs + 0.20 * anc + 0.10 * attr + tag_bonus
+    lr = min(a.length, b.length) / max(a.length, b.length)
+    if lr < 0.5:
+        score *= 0.85
+    return max(0.0, min(1.0, score))
+
+
+def _augment_actions_with_fuzzy_moves(
+    actions: List[Any],
+    orig_doc: _ElementTree,
+    mod_doc: _ElementTree,
+    *,
+    threshold: float = _MOVE_SIM_THRESHOLD,
+    min_tokens: int = _MOVE_MIN_TOKENS,
+    min_chars: int = _MOVE_MIN_CHARS,
+    max_pairs: int = _MOVE_MAX_CANDIDATES,
+) -> List[Any]:
+    """Pair DeleteNode + InsertNode actions that represent moves and emit MoveNode."""
+    if not actions:
+        return actions
+
+    del_fps: List[_NodeFP] = []
+    ins_fps: List[_NodeFP] = []
+
+    for idx, a in enumerate(actions):
+        if isinstance(a, DeleteNode):
+            xp = _safe_get_attr(a, "node", "node_xpath", "target")
+            if not xp:
+                continue
+            el = _get_element_by_xpath_from_tree(xp, orig_doc)
+            fp = _build_fp_for_element(el, xp)
+            if fp:
+                fp.action_index = idx
+                del_fps.append(fp)
+
+        elif isinstance(a, InsertNode):
+            el, parent_xpath, pos = _resolve_insert_element(a, mod_doc)
+            target_el = el or _get_element_by_xpath_from_tree(parent_xpath or "", mod_doc)
+            if target_el is None:
+                continue
+            if el is None:
+                node_struct = _safe_get_attr(a, "node")
+                if isinstance(node_struct, _Element):
+                    target_el = node_struct
+            xp = None
+            try:
+                if el is not None:
+                    xp = el.getroottree().getpath(el)
+                elif parent_xpath is not None:
+                    xp = parent_xpath
+            except Exception:
+                xp = parent_xpath or ""
+            fp = _build_fp_for_element(target_el, xp or "")
+            if fp:
+                fp.parent_xpath = parent_xpath
+                fp.pos = pos if (isinstance(pos, int) or (isinstance(pos, str) and str(pos).isdigit())) else None
+                fp.action_index = idx
+                ins_fps.append(fp)
+
+    if not del_fps or not ins_fps:
+        return actions
+
+    cand: List[Tuple[float, int, int]] = []
+    for d in del_fps:
+        for i in ins_fps:
+            if len(cand) >= max_pairs:
+                break
+            if (d.tag != i.tag) and not (d.tag in _BLOCK_TAGS and i.tag in _BLOCK_TAGS):
+                continue
+            len_ratio = min(d.length, i.length) / max(d.length, i.length)
+            if len_ratio < 0.40:
+                continue
+            if _simhash_sim(d.simhash, i.simhash) < 0.60:
+                continue
+            s = _score_pair(d, i)
+            if s >= threshold:
+                cand.append((s, d.action_index, i.action_index))
+        if len(cand) >= max_pairs:
+            break
+
+    if not cand:
+        return actions
+
+    cand.sort(reverse=True)
+    matched_d: Set[int] = set()
+    matched_i: Set[int] = set()
+    inject_moves: Dict[int, List[Any]] = {}
+
+    def _mk_move_id(src_xp: str, tgt_px: str, pos_val: Optional[int]) -> str:
+        h = hashlib.blake2b(f"{src_xp}|{tgt_px}|{pos_val}".encode("utf-8", "replace"), digest_size=6).hexdigest()
+        return f"mv_{h}"
+
+    for score, d_idx, i_idx in cand:
+        if d_idx in matched_d or i_idx in matched_i:
+            continue
+        d_act = actions[d_idx]
+        i_act = actions[i_idx]
+        src_xpath = _safe_get_attr(d_act, "node", "node_xpath", "target")
+        tgt_parent = _safe_get_attr(i_act, "parent_xpath", "target")
+        pos = _safe_get_attr(i_act, "pos", "position")
+        sib_xpath = _safe_get_attr(i_act, "sibling_xpath")
+
+        if isinstance(pos, str) and pos in ("before", "after") and sib_xpath:
+            try:
+                sib = _get_element_by_xpath_from_tree(sib_xpath, mod_doc)
+                if sib is not None:
+                    par = sib.getparent()
+                    tgt_parent = par.getroottree().getpath(par)
+                    pos = int(par.index(sib) + (1 if pos == "after" else 0))
+            except Exception:
+                pass
+        elif not (isinstance(pos, int) or (isinstance(pos, str) and str(pos).isdigit())):
+            try:
+                parent_el = _get_element_by_xpath_from_tree(tgt_parent, mod_doc) if tgt_parent else None
+                if parent_el is not None:
+                    pos = len(parent_el)
+            except Exception:
+                pos = "into"
+
+        move_id = _mk_move_id(str(src_xpath), str(tgt_parent), int(pos) if str(pos).isdigit() else -1)
+        try:
+            if isinstance(pos, int) or (isinstance(pos, str) and str(pos).isdigit()):
+                pos_int = int(pos)
+                mv = MoveNode(src_xpath, tgt_parent, pos_int, move_id)  # type: ignore[call-arg]
+            else:
+                mv = MoveNode(src_xpath, tgt_parent, "into", move_id)  # type: ignore[call-arg]
+        except TypeError:
+            mv = MoveNode(node=src_xpath, target=tgt_parent, pos=pos, move_id=move_id)  # type: ignore[call-arg]
+
+        inject_moves.setdefault(i_idx, []).append(mv)
+        matched_d.add(d_idx)
+        matched_i.add(i_idx)
+        logger.debug(
+            f"FuzzyMove paired del#{d_idx} -> ins#{i_idx} (score={score:.3f}, id={move_id})"
+        )
+
+    if not inject_moves:
+        return actions
+
+    new_actions: List[Any] = []
+    for idx, act in enumerate(actions):
+        if idx in matched_d:
+            continue
+        if idx in matched_i:
+            for mv in inject_moves.get(idx, []):
+                new_actions.append(mv)
+            continue
+        new_actions.append(act)
+
+    logger.info(
+        f"FuzzyMove: converted {len(matched_i)} insert/delete pairs into {sum(len(v) for v in inject_moves.values())} moves."
+    )
+    return new_actions
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 #                               XSLT template
 # ─────────────────────────────────────────────────────────────────────────────
 _XMLDIFF_XSLT_REVISED = """<?xml version="1.0" encoding="UTF-8"?>
@@ -1533,6 +1886,23 @@ async def create_html_redline(
             diff_options=differ_opts,
         )
         logger.info(f"xmldiff generated {len(actions)} actions using synthetic IDs.")
+
+        # --- Fuzzy move augmentation (Delete+Insert -> MoveNode) ---
+        try:
+            actions = _augment_actions_with_fuzzy_moves(
+                actions,
+                original_tree_pristine,
+                modified_tree_pristine,
+                threshold=_MOVE_SIM_THRESHOLD,
+                min_tokens=_MOVE_MIN_TOKENS,
+                min_chars=_MOVE_MIN_CHARS,
+                max_pairs=_MOVE_MAX_CANDIDATES,
+            )
+            logger.info(
+                f"After FuzzyMove: {len(actions)} actions (moves inflated, deletes/inserts deflated)."
+            )
+        except Exception as e:
+            logger.exception(f"Fuzzy move augmentation failed: {e}")
 
         # Debug: Log first few actions
         if actions:
