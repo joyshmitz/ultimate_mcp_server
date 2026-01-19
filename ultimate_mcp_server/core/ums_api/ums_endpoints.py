@@ -11,11 +11,11 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi import Path as ApiPath
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 from .ums_models import *
 from .ums_services import *
-from .ums_database import get_db_connection
+
 
 def setup_ums_api(app: FastAPI) -> None:
     """
@@ -115,30 +115,30 @@ def setup_ums_api(app: FastAPI) -> None:
         has_more: bool
 
     # ---------- Static assets ----------
-        # ---------- Root Discovery Endpoint ----------
-        
-        @app.get(
-            "/",
-            summary="MCP Server Discovery",
-            description="Returns information about the MCP server endpoint",
-            response_description="Server information including transport type and endpoint path",
-        )
-        async def root_endpoint():  # noqa: D401
-            """Root endpoint for MCP server discovery"""
-            response_data = {
-                    "type": "mcp-server",
-                    "version": "1.0.0",
-                    "transport": "http",
-                    "endpoint": "/mcp",
-                    "api_docs": "/api/docs",
-                    "api_spec": "/api/openapi.json",
-                }
-                headers = {
-                    "X-MCP-Server": "true",
-                    "X-MCP-Version": "1.0.0",
-                    "X-MCP-Transport": "http",
-                }
-            return JSONResponse(content=response_data, headers=headers)
+    # ---------- Root Discovery Endpoint ----------
+
+    @app.get(
+        "/",
+        summary="MCP Server Discovery",
+        description="Returns information about the MCP server endpoint",
+        response_description="Server information including transport type and endpoint path",
+    )
+    async def root_endpoint():  # noqa: D401
+        """Root endpoint for MCP server discovery"""
+        response_data = {
+            "type": "mcp-server",
+            "version": "1.0.0",
+            "transport": "http",
+            "endpoint": "/mcp",
+            "api_docs": "/api/docs",
+            "api_spec": "/api/openapi.json",
+        }
+        headers = {
+            "X-MCP-Server": "true",
+            "X-MCP-Version": "1.0.0",
+            "X-MCP-Transport": "http",
+        }
+        return JSONResponse(content=response_data, headers=headers)
 
     @app.get("/tools/ums_explorer.html", include_in_schema=False)
     async def serve_ums_explorer():
@@ -250,7 +250,6 @@ def setup_ums_api(app: FastAPI) -> None:
         seg_seconds = 1 if granularity == "second" else 60 if granularity == "minute" else 3600
         segments: List[Dict[str, Any]] = []
         current = start_ts
-        from collections import Counter
 
         while current < end_ts:
             seg_end = current + seg_seconds
@@ -276,7 +275,6 @@ def setup_ums_api(app: FastAPI) -> None:
         """Return aggregate stats about timeline complexity / changes."""
         if not timeline_data:
             return {}
-        from collections import Counter
 
         complexities = [it["complexity_score"] for it in timeline_data]
         changes = [it["change_magnitude"] for it in timeline_data if it["change_magnitude"] > 0]
@@ -980,7 +978,6 @@ def setup_ums_api(app: FastAPI) -> None:
         best_action = max(actions, key=lambda a: a.get("performance_score", 0))
         worst_action = min(actions, key=lambda a: a.get("performance_score", 0))
 
-        from collections import Counter
 
         efficiency_counts = Counter(a.get("efficiency_rating", "unknown") for a in actions)
 
@@ -2900,10 +2897,7 @@ def setup_ums_api(app: FastAPI) -> None:
 
     # ---------- Working Memory System Implementation ----------
 
-    from collections import defaultdict, deque
-    from threading import Lock
 
-    from fastapi import Body
 
     # Global working memory instance
     _working_memory_system = None

@@ -4,6 +4,10 @@ from typing import Any, Dict
 import pytest
 from pytest import MonkeyPatch
 
+# Remove the CompletionTools import as the class was deleted
+# from ultimate_mcp_server.tools.completion import CompletionTools 
+from ultimate_mcp_server.tools.document import DocumentTools
+
 from ultimate_mcp_server.core.server import Gateway
 from ultimate_mcp_server.tools.base import (
     BaseTool,
@@ -11,10 +15,6 @@ from ultimate_mcp_server.tools.base import (
     with_retry,
     with_tool_metrics,
 )
-
-# Remove the CompletionTools import as the class was deleted
-# from ultimate_mcp_server.tools.completion import CompletionTools 
-from ultimate_mcp_server.tools.document import DocumentTools
 from ultimate_mcp_server.tools.extraction import ExtractionTools
 from ultimate_mcp_server.utils import get_logger
 

@@ -1,22 +1,14 @@
 """Business logic and service functions for UMS API."""
 
-import json
 import math
-import sqlite3
 from collections import Counter, defaultdict, deque
 from datetime import datetime
-from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .ums_models import (
-    MemoryDetail,
-    PreviewMemory,
-    CriticalPathAction,
     FlameGraphNode,
 )
-from .ums_database import get_db_connection
-
 
 # ---------- Utility Functions ----------
 

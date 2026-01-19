@@ -1,10 +1,11 @@
 """Database utilities for UMS API."""
 
-import sqlite3
 import math
-from pathlib import Path
+import sqlite3
 from collections import Counter, defaultdict
+from pathlib import Path
 from typing import Any, Dict, List
+
 
 # Database path configuration
 def get_database_path() -> str:
@@ -389,7 +390,6 @@ def find_cognitive_patterns(
 ) -> List[Dict[str, Any]]:
     """Find recurring patterns in cognitive states"""
     patterns = []
-    from collections import defaultdict
 
     type_sequences = defaultdict(list)
     for state in states:
@@ -445,7 +445,6 @@ def calculate_single_state_similarity(
     return (key_similarity + value_similarity) / 2
 def analyze_state_transitions(states: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Analyze transitions between cognitive states"""
-    from collections import defaultdict
 
     transitions = defaultdict(int)
     for i in range(len(states) - 1):

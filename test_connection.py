@@ -5,7 +5,9 @@ Test script to verify Ultimate MCP Server is working correctly
 
 import asyncio
 import json
+
 from fastmcp import Client
+
 
 async def test_streamable_http():
     """Test connection to streamable-http server"""

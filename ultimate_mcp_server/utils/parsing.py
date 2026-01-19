@@ -345,7 +345,7 @@ async def parse_result(result: Any) -> Dict[str, Any]:
 
         # If text_to_parse is still None or is empty/whitespace after potential assignments
         if text_to_parse is None or not text_to_parse.strip():
-            logger.warning(f"No parsable text content found in result (type: {type(result)}, content preview: \'{str(text_to_parse)[:100]}...\').")
+            logger.warning(f"No parsable text content found in result (type: {type(result)}, content preview: '{str(text_to_parse)[:100]}...').")
             return {"error": "No parsable text content found in result", "result_type": str(type(result)), "content_preview": str(text_to_parse)[:100] if text_to_parse else None}
 
         # At this point, text_to_parse should be a non-empty string.
@@ -354,7 +354,7 @@ async def parse_result(result: Any) -> Dict[str, Any]:
         json_to_parse = extract_json_from_markdown(text_to_parse)
 
         if not json_to_parse.strip(): # If extraction resulted in an empty string (e.g. from "``` ```")
-            logger.warning(f"JSON extraction from text_to_parse yielded an empty string. Original text_to_parse: \'{text_to_parse[:200]}...\'")
+            logger.warning(f"JSON extraction from text_to_parse yielded an empty string. Original text_to_parse: '{text_to_parse[:200]}...'")
             # Fallback to trying the original text_to_parse if extraction gave nothing useful
             # This covers cases where text_to_parse might be pure JSON without fences.
             if text_to_parse.strip(): # Ensure original text_to_parse wasn't also empty
@@ -366,7 +366,7 @@ async def parse_result(result: Any) -> Dict[str, Any]:
         # Now, json_to_parse should be the best candidate string for JSON parsing.
         # Only attempt to parse if it's not empty/whitespace.
         if not json_to_parse.strip():
-            logger.warning(f"Final string to parse is empty. Original text_to_parse: \'{text_to_parse[:200]}...\'")
+            logger.warning(f"Final string to parse is empty. Original text_to_parse: '{text_to_parse[:200]}...'")
             return {"error": "Final string for JSON parsing is empty", "original_text_to_parse": text_to_parse}
 
         try:

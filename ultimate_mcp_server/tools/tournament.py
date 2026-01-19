@@ -1,8 +1,6 @@
 """Tournament tools for Ultimate MCP Server."""
 from typing import Any, Dict, List, Optional
 
-from ultimate_mcp_server.exceptions import ToolError
-
 from ultimate_mcp_server.core.models.tournament import (
     CancelTournamentInput,
     CancelTournamentOutput,
@@ -22,6 +20,7 @@ from ultimate_mcp_server.core.models.tournament import (
     ModelConfig as InputModelConfig,
 )
 from ultimate_mcp_server.core.tournaments.manager import tournament_manager
+from ultimate_mcp_server.exceptions import ToolError
 from ultimate_mcp_server.tools.base import with_error_handling, with_tool_metrics
 from ultimate_mcp_server.utils import get_logger
 

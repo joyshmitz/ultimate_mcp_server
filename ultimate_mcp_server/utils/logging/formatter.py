@@ -5,17 +5,12 @@ This module provides formatters that convert log records into Rich renderables
 with consistent styling and visual elements.
 """
 import logging
-import time
-import traceback
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
-from rich.columns import Columns
 from rich.console import Console, ConsoleRenderable, Group
 from rich.logging import RichHandler
-from rich.panel import Panel
 from rich.style import Style
-from rich.table import Table
 from rich.text import Text
 from rich.traceback import Traceback
 
@@ -368,7 +363,8 @@ def create_rich_console_handler(**kwargs):
     kwargs.pop('console', None)
     
     # Extract formatter config if provided (though unlikely needed with custom handler)
-    formatter_config = kwargs.pop('formatter', None) 
+    # Pop it from kwargs to prevent it being passed to the handler
+    kwargs.pop('formatter', None)
     # We expect the handler config to specify the formatter directly or rely on default
 
     # Extract level, default to NOTSET if not provided

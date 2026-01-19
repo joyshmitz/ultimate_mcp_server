@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Test script for checking Ollama connectivity."""
 import asyncio
-import aiohttp
 import sys
+
+import aiohttp
+
 
 async def test_ollama():
     """Test connection to Ollama API."""

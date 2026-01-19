@@ -1,9 +1,9 @@
 """Tournament and synthesis models for Ultimate MCP Server."""
 
+import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
-import uuid
 
 from pydantic import BaseModel, Field
 

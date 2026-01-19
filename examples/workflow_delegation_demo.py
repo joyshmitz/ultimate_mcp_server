@@ -551,12 +551,13 @@ async def main():
         
         # --- Register Necessary Tools --- 
         # Ensure tools called by demos are registered on the MCP instance
-        from ultimate_mcp_server.tools.completion import generate_completion
         from ultimate_mcp_server.tools.document import (
             extract_entities,
             generate_qa_pairs,
             summarize_document,
         )
+
+        from ultimate_mcp_server.tools.completion import generate_completion
         from ultimate_mcp_server.tools.optimization import recommend_model
         
         mcp.tool()(recommend_model)

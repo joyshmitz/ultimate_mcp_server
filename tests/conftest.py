@@ -1,15 +1,13 @@
 """Pytest fixtures for Ultimate MCP Server tests."""
 import asyncio
 import json
-import os
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from pytest import MonkeyPatch
 
-from ultimate_mcp_server.config import Config, get_config
-from ultimate_mcp_server.constants import Provider
+from ultimate_mcp_server.config import Config
 from ultimate_mcp_server.core.providers.base import BaseProvider, ModelResponse
 from ultimate_mcp_server.core.server import Gateway
 from ultimate_mcp_server.utils import get_logger

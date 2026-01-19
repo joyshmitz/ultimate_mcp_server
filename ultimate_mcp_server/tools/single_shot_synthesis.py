@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
-from ultimate_mcp_server.exceptions import ToolError
 from pydantic import ValidationError
 
 from ultimate_mcp_server.core.models.tournament import (  # Reusing models from tournament where appropriate
@@ -19,6 +18,7 @@ from ultimate_mcp_server.core.models.tournament import (  # Reusing models from 
     SingleShotSynthesisOutput,
 )
 from ultimate_mcp_server.core.tournaments.utils import extract_thinking
+from ultimate_mcp_server.exceptions import ToolError
 from ultimate_mcp_server.tools.base import with_error_handling, with_tool_metrics
 from ultimate_mcp_server.tools.completion import generate_completion
 from ultimate_mcp_server.tools.extraction import extract_code_from_response
