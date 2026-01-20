@@ -210,3 +210,7 @@ target-version = "py313"
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "Q"]
 ignore = ["E203", "E501", "Q000"]
+
+[tool.ruff.lint.per-file-ignores]
+"ultimate_mcp_server/core/ums_api/__init__.py" = ["F403"]
+"ultimate_mcp_server/core/ums_api/ums_endpoints.py" = ["F403", "F405"]
