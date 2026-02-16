@@ -249,3 +249,6 @@ storage/unified_agent_memory.dbOLD
 
 # Compiled binaries
 a.out
+
+# bv (beads viewer) local config and caches
+.bv/
