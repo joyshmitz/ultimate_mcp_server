@@ -78,6 +78,7 @@ class Provider(str, Enum):
     OPENROUTER = "openrouter"
     OLLAMA = "ollama"
     GROK = "grok"
+    LOCAL = "local"
     MISTRAL = "mistral"
     AWS = "aws"
     AZURE = "azure"
@@ -190,6 +191,8 @@ COST_PER_MILLION_TOKENS: Dict[str, Dict[str, float]] = {
     "mix_77/gemma3-qat-tools:27b": {"input": 0.0001, "output": 0.0001},
     "JollyLlama/GLM-Z1-32B-0414-Q4_K_M:latest": {"input": 0.0001, "output": 0.0001},
     "llama3.2-vision:latest": {"input": 0.0001, "output": 0.0001},
+    # Local (OpenAI-compatible) provider — local inference is free.
+    "llama3.1:8b": {"input": 0.0, "output": 0.0},
 }
 
 
@@ -205,6 +208,7 @@ DEFAULT_MODELS = {
     Provider.OPENROUTER: "mistralai/mistral-nemo",
     Provider.GROK: "grok-3-latest",
     Provider.OLLAMA: "mix_77/gemma3-qat-tools:27b",
+    Provider.LOCAL: "llama3.1:8b",
 }
 
 
@@ -262,6 +266,7 @@ EMOJI_MAP = {
     Provider.OPENROUTER: "🌐",
     Provider.OLLAMA: "🦙",
     Provider.GROK: "⚡",
+    Provider.LOCAL: "🏠",
 }
 
 

@@ -257,6 +257,11 @@ class ProvidersConfig(BaseModel):
     ollama: ProviderConfig = Field(
         default_factory=ProviderConfig, description="Ollama provider configuration"
     )
+    local: ProviderConfig = Field(
+        default_factory=ProviderConfig,
+        description="Generic local OpenAI-compatible provider configuration "
+        "(Ollama, llama.cpp, mistral.rs, vLLM, LM Studio)",
+    )
 
 
 class FilesystemProtectionConfig(BaseModel):
@@ -799,6 +804,39 @@ def load_config(
             config_logger.debug(f"Setting Ollama timeout from env/'.env': {ollama_conf.timeout}")
     except Exception as e:
         config_logger.warning(f"Could not load optional Ollama settings from env: {e}")
+
+    # --- Load Generic Local (OpenAI-compatible) Provider Settings ---
+    # Covers Ollama, llama.cpp, mistral.rs, vLLM, LM Studio via one configurable endpoint.
+    local_conf = loaded_config.providers.local
+    try:
+        enabled_env = decouple_config.get("LOCAL_LLM_ENABLED", default=None)
+        if enabled_env is not None:
+            local_conf.enabled = enabled_env.lower() == "true"
+            config_logger.debug(f"Setting Local provider enabled from env/'.env': {local_conf.enabled}")
+
+        base_url_env = decouple_config.get("LOCAL_LLM_BASE_URL", default=None)
+        if base_url_env:
+            local_conf.base_url = base_url_env
+            config_logger.debug(f"Setting Local provider base_url from env/'.env': {local_conf.base_url}")
+
+        default_model_env = decouple_config.get("LOCAL_LLM_DEFAULT_MODEL", default=None)
+        if default_model_env:
+            local_conf.default_model = default_model_env
+            config_logger.debug(
+                f"Setting Local provider default_model from env/'.env': {local_conf.default_model}"
+            )
+
+        api_key_env = decouple_config.get("LOCAL_LLM_API_KEY", default=None)
+        if api_key_env:
+            local_conf.api_key = api_key_env
+            config_logger.debug("Setting Local provider api_key from env/'.env'.")
+
+        timeout_env = decouple_config.get("LOCAL_LLM_REQUEST_TIMEOUT", default=None)
+        if timeout_env is not None:
+            local_conf.timeout = float(timeout_env)
+            config_logger.debug(f"Setting Local provider timeout from env/'.env': {local_conf.timeout}")
+    except Exception as e:
+        config_logger.warning(f"Could not load optional Local provider settings from env: {e}")
 
     # Example for generic provider settings like base_url, default_model, organization
     for provider_name in [

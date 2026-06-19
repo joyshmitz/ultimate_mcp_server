@@ -476,7 +476,7 @@ class BulkOperationRequest(BaseModel):
     """Request model for bulk operations"""
 
     operation_type: str = Field(
-        ..., description="Type of bulk operation to perform", regex="^(delete|archive|merge)$"
+        ..., description="Type of bulk operation to perform", pattern="^(delete|archive|merge)$"
     )
     memory_ids: List[str] = Field(..., description="List of memory IDs to operate on", min_items=1)
     target_memory_id: Optional[str] = Field(
@@ -1018,7 +1018,7 @@ class RestoreStateRequest(BaseModel):
 
     restore_mode: str = Field(
         default="full",
-        regex="^(full|partial|snapshot)$",
+        pattern="^(full|partial|snapshot)$",
         description="Type of restoration to perform",
         example="full",
     )

@@ -112,7 +112,8 @@ API costs for advanced models can be substantial. Ultimate MCP Server helps redu
 
 ### 🌐 Provider Abstraction
 Avoid provider lock-in with a unified interface:
--   🔗 Standard API for **OpenAI**, **Anthropic (Claude)**, **Google (Gemini)**, **xAI (Grok)**, **DeepSeek**, and **OpenRouter**.
+-   🔗 Standard API for **OpenAI**, **Anthropic (Claude)**, **Google (Gemini)**, **xAI (Grok)**, **DeepSeek**, **OpenRouter**, and **local OpenAI-compatible servers** (Ollama, llama.cpp, mistral.rs, vLLM, LM Studio).
+-   🏠 **Free local inference**: a single configurable `local` provider talks to any OpenAI-compatible local server via `base_url`, and is accounted at **$0 cost** so the cost optimizer prefers it for delegated work.
 -   ⚙️ Consistent parameter handling and response formatting.
 -   🔄 Ability to **swap providers** without changing application code.
 -   🛡️ Protection against provider-specific outages and limitations through fallback mechanisms.
@@ -143,7 +144,8 @@ Process documents and data efficiently:
 -   **Delegation Tracking**: Monitors delegation patterns, costs, and outcomes (via Analytics).
 
 ### 🌍 Provider Integration
--   **Multi-Provider Support**: First-class support for OpenAI, Anthropic, Google, DeepSeek, xAI (Grok), OpenRouter. Extensible architecture.
+-   **Multi-Provider Support**: First-class support for OpenAI, Anthropic, Google, DeepSeek, xAI (Grok), OpenRouter, and **local OpenAI-compatible servers** (Ollama, llama.cpp, mistral.rs, vLLM, LM Studio) via a single configurable `local` provider. Extensible architecture.
+-   **Free Local Inference**: The `local` provider is cost-accounted at **$0**, so the intelligent delegation / cost-optimization layer will route cost-sensitive work (summarization, extraction, simple Q&A, formatting) to your own hardware when a capable local model is configured.
 -   **Model Management**: Handles different model capabilities, context windows, and pricing. Automatic selection and fallback mechanisms.
 
 ### 💾 Advanced Caching
@@ -278,6 +280,7 @@ Process documents and data efficiently:
 -   **Grok Integration**: Native support for xAI's Grok.
 -   **DeepSeek Support**: Optimized handling for DeepSeek models.
 -   **OpenRouter Integration**: Access a wide variety via OpenRouter API key.
+-   **Local / Self-Hosted Integration**: A single configurable `local` provider for any OpenAI-compatible local server — Ollama, llama.cpp's `llama-server`, mistral.rs, vLLM, and LM Studio — point it at a `base_url` and run **free** ($0-cost) inference on your own hardware.
 -   **Gemini Integration**: Comprehensive support for Google's Gemini models.
 -   **Anthropic Integration**: Full support for Claude models including Claude 3.5 Sonnet and Haiku.
 -   **OpenAI Integration**: Complete support for GPT-3.5, GPT-4.0, and newer models.
@@ -346,6 +349,17 @@ GEMINI_API_KEY=your_google_ai_studio_key... # For Google AI Studio (Gemini API)
 DEEPSEEK_API_KEY=your_deepseek_key...
 OPENROUTER_API_KEY=your_openrouter_key...
 GROK_API_KEY=your_grok_key... # For Grok via xAI API
+
+# --- Local / Self-Hosted Providers (OpenAI-compatible, FREE inference) ---
+# One generic provider covers Ollama, llama.cpp (llama-server), mistral.rs, vLLM, and LM Studio.
+# No API key is required by most local servers; LOCAL_LLM_API_KEY is optional.
+# LOCAL_LLM_BASE_URL=http://localhost:11434/v1   # Default (Ollama). Examples:
+#   llama.cpp / mistral.rs / vLLM : http://localhost:8000/v1
+#   LM Studio                     : http://localhost:1234/v1
+# LOCAL_LLM_DEFAULT_MODEL=llama3.1:8b            # Model name as served by your local backend
+# LOCAL_LLM_API_KEY=                             # Optional; most local servers ignore it
+# LOCAL_LLM_REQUEST_TIMEOUT=30                   # Optional request timeout in seconds
+# LOCAL_LLM_ENABLED=true                         # Optional; set false to disable the local provider
 
 # --- Server Configuration (Defaults shown) ---
 GATEWAY_SERVER_PORT=8013
