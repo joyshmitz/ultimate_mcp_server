@@ -79,12 +79,63 @@ CACHE_FILE_PATH = os.path.join(CACHE_FILE_DIR, "marqo_docstring_cache.json")
 # --- LLM Client for Doc Generation ---
 
 
+def _resolve_doc_generation_providers() -> List[str]:
+    """Build the ordered provider fallback list for doc-generation LLM calls.
+
+    The provider used to be hard-coded to Gemini (gh #16), so doc augmentation
+    failed outright whenever Gemini was not configured even if other providers
+    were. Resolution order, de-duplicated while preserving order:
+
+    1. ``MARQO_DOC_GENERATION_PROVIDER`` (explicit override, env/.env),
+    2. the gateway's configured ``default_provider``,
+    3. a fixed fallback chain across the common providers.
+
+    ``try_providers`` walks this list and uses the first provider that
+    initializes successfully, so a missing API key for any single provider is no
+    longer fatal — the augmentation simply uses the next available one.
+    """
+    candidates: List[str] = []
+
+    override = os.environ.get("MARQO_DOC_GENERATION_PROVIDER")
+    if override and override.strip():
+        candidates.append(override.strip().lower())
+
+    try:
+        from ultimate_mcp_server.config import get_config
+
+        default_provider = getattr(get_config(), "default_provider", None)
+        if default_provider:
+            candidates.append(str(default_provider).strip().lower())
+    except Exception as e:  # Config is optional for this best-effort helper.
+        logger.debug(f"Could not read default provider from config: {e}")
+
+    candidates.extend(
+        [
+            Provider.OPENAI.value,
+            Provider.ANTHROPIC.value,
+            Provider.GEMINI.value,
+            Provider.DEEPSEEK.value,
+            Provider.OPENROUTER.value,
+        ]
+    )
+
+    seen: set = set()
+    ordered: List[str] = []
+    for name in candidates:
+        if name and name not in seen:
+            seen.add(name)
+            ordered.append(name)
+    return ordered
+
+
 async def _call_llm_for_doc_generation(prompt: str) -> Optional[str]:
     """
     Calls an LLM to generate dynamic documentation for the Marqo search tool.
 
     This function uses the Ultimate MCP Server's CompletionClient to send a prompt to an
-    LLM (preferring Gemini) and retrieve generated content for enhancing the tool's documentation.
+    LLM and retrieve generated content for enhancing the tool's documentation. The provider
+    is resolved dynamically (see _resolve_doc_generation_providers) and tried with fallback,
+    so it works with whatever provider is configured rather than a hard-coded one.
     It handles the entire process including client initialization, LLM API call configuration,
     and error handling.
 
@@ -100,7 +151,9 @@ async def _call_llm_for_doc_generation(prompt: str) -> Optional[str]:
         None: If the LLM call fails or returns empty content.
 
     Notes:
-        - Uses the Gemini provider by default, but will fall back to other providers if needed.
+        - Provider order: MARQO_DOC_GENERATION_PROVIDER env override, then the gateway's
+          configured default_provider, then a common-provider fallback chain. Falls back
+          across providers automatically (gh #16).
         - Sets temperature to 0.3 for consistent, deterministic outputs.
         - Limits output to 400 tokens, which is sufficient for documentation purposes.
         - Enables caching to improve performance for repeated calls.
@@ -109,11 +162,18 @@ async def _call_llm_for_doc_generation(prompt: str) -> Optional[str]:
         # Instantiate the client - assumes necessary env vars/config are set for the gateway
         client = CompletionClient()
 
-        logger.info("Calling LLM to generate dynamic docstring augmentation...")
-        # Use generate_completion (can also use try_providers if preferred)
-        result = await client.generate_completion(
+        providers = _resolve_doc_generation_providers()
+        logger.info(
+            "Calling LLM to generate dynamic docstring augmentation "
+            f"(provider order: {', '.join(providers)})..."
+        )
+        # Use try_providers so a missing/misconfigured provider (e.g. no Gemini
+        # API key — gh #16) transparently falls back to the next configured one
+        # instead of failing the whole augmentation. The provider is no longer
+        # hard-coded; see _resolve_doc_generation_providers().
+        result = await client.try_providers(
             prompt=prompt,
-            provider=Provider.GEMINI.value,  # Prioritize Gemini, adjust if needed
+            providers=providers,
             temperature=0.3,  # Lower temperature for more factual/consistent doc generation
             max_tokens=400,  # Allow sufficient length for the documentation section
             use_cache=True,  # Cache the generated doc string for a given config
